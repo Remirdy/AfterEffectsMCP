@@ -1,6 +1,6 @@
-# Example prompts
+# Example motion directions
 
-## Full end-to-end (what the user types in the MCP client)
+## Full end-to-end direction
 
 > Analyze this PSD first. Look at the design, layer structure, text, mockups,
 > background, icons, and visual hierarchy. Then create a professional After
@@ -14,7 +14,7 @@
 > Behance-ready. Avoid excessive effects. Use smooth easing and clean timing.
 > Create a 10-second 9:16 composition at 1080x1920 at 30 FPS.
 
-## The AI client will call the tools in this order
+## Tool-call sequence
 
 1. `analyze_psd_visuals`
    ```json
@@ -27,9 +27,9 @@
    }
    ```
 
-## Professional prompt variants
+## Professional direction variants
 
-Use prompts like these in `create_motion_plan_from_analysis.userPrompt`:
+Use directions like these in `create_motion_plan_from_analysis.userPrompt`:
 
 ```text
 Cinematic premium app launch animation. Add subtle camera push, layered depth,
@@ -47,8 +47,7 @@ motion. No text rewriting.
 Minimal luxury portfolio motion. Slow elegant fades, restrained parallax, no
 excessive effects, subtle glow only on the logo, refined commercial timing.
 ```
-   → returns `analysisJsonPath` + preview/thumbnail paths. The AI can read the
-   preview image to visually inspect the design.
+   → returns `analysisJsonPath` + preview/thumbnail paths for visual inspection.
 
 2. `create_motion_plan_from_analysis`
    ```json

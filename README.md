@@ -1,13 +1,13 @@
 # motionpilot-ae-mcp
 
-A **local MCP server** that lets MCP-compatible AI clients (Claude Desktop, etc.)
-analyze uploaded **PSD** files and automatically animate them in **Adobe After
-Effects** — producing a saved `.aep` project and an optional `.mp4` preview.
+A **local MCP server** for analyzing **PSD** files and building animated
+**Adobe After Effects** projects, with saved `.aep` output and optional
+`.mp4`/`.mov` previews.
 
-The intended workflow: a user uploads a PSD and writes a natural-language prompt
-like *"Analyze this PSD, then build a premium After Effects animation where the
-title fades in, the mockup slides with depth, UI cards stagger in, and the
-background has subtle parallax."* The AI then drives the tools below.
+The intended workflow: provide a PSD and a motion direction like *"Build a
+premium After Effects animation where the title fades in, the mockup slides with
+depth, UI cards stagger in, and the background has subtle parallax."* The server
+then runs the tools below.
 
 ---
 
@@ -16,7 +16,7 @@ background has subtle parallax."* The AI then drives the tools below.
 ```
 PSD ──▶ analyze_psd_visuals ──▶ analysis.json + preview.png + thumbnails/
                                     │
-                AI inspects preview + structure
+               inspect preview + structure
                                     │
         create_motion_plan_from_analysis ──▶ motion-plan.json
                                     │
@@ -38,17 +38,17 @@ run by the AE binary (`aerender` for headless rendering when available).
 | Tool | Purpose |
 | --- | --- |
 | `analyze_psd_visuals` | Flattened preview + per-layer thumbnails; extract name/order/bounds/opacity/visibility/type; detect naming patterns (`BG_`, `Text_`, `Title_`, `Subtitle_`, `Phone_`, `Mockup_`, `Card_`, `Button_`, `Icon_`, `Logo_`, `Particle_`, `Character_`, `LOCKED`); suggest a role + animation per layer; return structured JSON + image paths. |
-| `create_motion_plan_from_analysis` | Turn the analysis + user prompt into a structured, hierarchy-aware motion plan. Never changes text; locked/text layers animate via transform/mask/range-selector only. |
+| `create_motion_plan_from_analysis` | Turn the analysis + motion direction into a structured, hierarchy-aware motion plan. Never changes text; locked/text layers animate via transform/mask/range-selector only. |
 | `import_psd_to_after_effects` | Open AE, import the PSD as a composition retaining layer sizes, set duration/FPS, save a new `.aep`. |
 | `animate_after_effects_project` | Apply the motion plan as keyframes + easing (position, scale, opacity, rotation, blur, masks, parallax, stagger, light sweep) and save a new animated `.aep`. |
 | `render_preview` | Render a comp to `.mp4`/`.mov` via `aerender` (or the AE render queue) and return logs + path. |
 | `check_after_effects_setup` | Validate local `AE_BINARY` / `AERENDER_BINARY` resolution without launching After Effects. Good first smoke test after install. |
 | `execute_after_effects_actions` | General AE control: create/list compositions, read project info, create text/shape/solid/adjustment/camera/null layers, edit layer properties/timing, toggle 2D/3D, set blend modes and track mattes, duplicate/delete layers, create masks, set keyframes, apply expressions, and batch-set properties. |
 
-### Prompt-driven professional motion
+### Direction-driven professional motion
 
-`create_motion_plan_from_analysis` now reads the user's animation prompt more
-deeply. It detects cues like:
+`create_motion_plan_from_analysis` reads the animation direction and detects
+cues like:
 
 - `cinematic`, `camera`, `trailer` -> subtle AE camera push
 - `depth`, `parallax`, `3D` -> stronger layered parallax/depth drift
@@ -60,8 +60,7 @@ deeply. It detects cues like:
 - `Behance`, `portfolio`, `commercial`, `advert`, `launch` -> richer professional polish
 
 The generated motion plan includes a `promptProfile` with inferred `tempo`,
-`density`, `direction`, and `professionalTouches`, so clients can show why a
-plan looks the way it does.
+`density`, `direction`, and `professionalTouches`.
 
 Additional animation types available to generated plans:
 `blurFade`, `overshootPop`, `rotateIn`, `depthDrift`, `scalePulse`,
@@ -194,9 +193,9 @@ $env:AERENDER_BINARY="C:\Program Files\Adobe\Adobe After Effects 2025\Support Fi
 
 ---
 
-## Claude Desktop / MCP client configuration
+## MCP host configuration
 
-Add to your client's MCP config (e.g. `claude_desktop_config.json`). A ready
+Add this server to an MCP host config. A ready
 example is in [`claude_desktop_config.example.json`](./claude_desktop_config.example.json):
 
 ```json
@@ -213,18 +212,18 @@ example is in [`claude_desktop_config.example.json`](./claude_desktop_config.exa
 }
 ```
 
-Restart the client; the tools appear automatically.
+Restart the host application; the tools appear automatically.
 
 Run `check_after_effects_setup` first. It should return the resolved After
 Effects app path and `aerender` path before you run import/animate/render tools.
 
 ---
 
-## Example outputs & prompts
+## Example outputs & motion directions
 
 - [`examples/analysis.example.json`](./examples/analysis.example.json)
 - [`examples/motion-plan.example.json`](./examples/motion-plan.example.json)
-- [`examples/prompts.md`](./examples/prompts.md) — full end-to-end prompt and the
+- [`examples/prompts.md`](./examples/prompts.md) — full end-to-end direction and the
   exact tool-call sequence.
 
 ---
