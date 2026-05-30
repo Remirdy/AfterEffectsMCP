@@ -15,6 +15,20 @@ then runs the tools below.
 
 ---
 
+## Documentation
+
+Start here if you are setting up or integrating the server:
+
+| Guide | What it covers |
+| --- | --- |
+| [Install & build](#install--build) | Dependencies, build commands, and After Effects paths. |
+| [MCP host configuration](#mcp-host-configuration) | Basic local MCP setup. |
+| [Integrations](./docs/integrations.md) | Claude Desktop, Cursor, VS Code Copilot Agent mode, Codex, and ChatGPT/OpenAI notes. |
+| [Example outputs & motion directions](#example-outputs--motion-directions) | Example JSON files and tool-call workflow. |
+| [MCP host templates](./examples/mcp/) | Ready-to-edit config files for supported local hosts. |
+
+---
+
 ## How it works
 
 ```
