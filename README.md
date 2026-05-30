@@ -58,6 +58,8 @@ run by the AE binary (`aerender` for headless rendering when available).
 | `analyze_psd_visuals` | Flattened preview + per-layer thumbnails; extract name/order/bounds/opacity/visibility/type; detect naming patterns (`BG_`, `Text_`, `Title_`, `Subtitle_`, `Phone_`, `Mockup_`, `Card_`, `Button_`, `Icon_`, `Logo_`, `Particle_`, `Character_`, `LOCKED`); suggest a role + animation per layer; return structured JSON + image paths. |
 | `create_motion_plan_from_analysis` | Turn the analysis + motion direction into a structured, hierarchy-aware motion plan. Never changes text; locked/text layers animate via transform/mask/range-selector only. |
 | `create_video_prompt_package` | Turn a prompt and optional reference URL into a production-ready video package: creative brief, beat/shot list, AI-video prompts, and After Effects motion direction. |
+| `create_image_asset_pack` | Generate procedural PNG assets from a prompt: background, hero object, connection rings, kinetic streaks, title plate, and CTA plate. |
+| `create_3d_scene_from_assets` | Build a 3D/2.5D After Effects project from generated assets with camera, light, Z-depth, parallax, and orbital motion. |
 | `import_psd_to_after_effects` | Open AE, import the PSD as a composition retaining layer sizes, set duration/FPS, save a new `.aep`. |
 | `animate_after_effects_project` | Apply the motion plan as keyframes + easing (position, scale, opacity, rotation, blur, masks, parallax, stagger, light sweep) and save a new animated `.aep`. |
 | `render_preview` | Render a comp to `.mp4`/`.mov` via `aerender` (or the AE render queue) and return logs + path. |
@@ -114,6 +116,20 @@ call a video model by itself; it creates:
 
 Reference URLs can be used for direction, but the package is designed to avoid
 copying the source video.
+
+### Prompt-to-3D After Effects scenes
+
+The server can create visual assets and assemble them into a 3D/2.5D After
+Effects scene:
+
+1. `create_image_asset_pack` generates PNG assets plus `asset-manifest.json`.
+2. `create_3d_scene_from_assets` imports those assets into AE, places them as
+   3D layers, adds camera and light, then applies parallax/orbit expressions.
+3. `render_preview` can render the result when the project is approved.
+
+This first implementation generates procedural image assets locally. It is
+designed so external image-generation outputs can be added later through the
+same manifest format.
 
 ### General AE actions
 

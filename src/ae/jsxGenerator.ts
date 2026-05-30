@@ -714,3 +714,88 @@ export function generateExecuteActionsJsx(opts: {
   `;
   return withReport(body);
 }
+
+export function generateCreate3dSceneJsx(opts: {
+  manifest: {
+    width: number;
+    height: number;
+    assets: Array<{
+      name: string;
+      path: string;
+      role: string;
+      z: number;
+      scale: number;
+      position: [number, number];
+    }>;
+  };
+  outputAepPath: string;
+  duration: number;
+  fps: number;
+  compName: string;
+}): string {
+  const body = `
+    app.newProject();
+    app.beginUndoGroup("MotionPilot 3D Scene");
+
+    var MANIFEST = ${jsonLiteral(opts.manifest)};
+    var comp = app.project.items.addComp(${jstr(opts.compName)}, MANIFEST.width, MANIFEST.height, 1, ${opts.duration}, ${opts.fps});
+    comp.bgColor = [0.02, 0.025, 0.05];
+    MP.log("Created 3D scene comp: " + comp.name);
+
+    function importAsset(path) {
+      var f = new File(path);
+      if (!f.exists) throw new Error("Asset not found: " + path);
+      var io = new ImportOptions(f);
+      return app.project.importFile(io);
+    }
+
+    var layers = [];
+    for (var i = 0; i < MANIFEST.assets.length; i++) {
+      var a = MANIFEST.assets[i];
+      var item = importAsset(a.path);
+      var ly = comp.layers.add(item);
+      ly.name = a.name;
+      ly.threeDLayer = true;
+      ly.property("ADBE Transform Group").property("ADBE Position").setValue([a.position[0], a.position[1], a.z]);
+      ly.property("ADBE Transform Group").property("ADBE Scale").setValue([a.scale, a.scale, a.scale]);
+      try { ly.motionBlur = true; } catch (e) {}
+      layers.push(ly);
+
+      if (a.role === "background") {
+        MP.addParallax(ly, 28, 0, ${opts.duration}, "sineInOut");
+      } else if (a.role === "hero") {
+        MP.addScaleAnimation(ly, 84, a.scale, 0.45, 1.4, "backOut");
+        MP.addPositionAnimation(ly, [0, 72], 0.45, 1.4, "backOut");
+        ly.property("ADBE Transform Group").property("ADBE Rotate Y").expression = "Math.sin(time*.55)*5;";
+      } else if (a.role === "accent") {
+        ly.property("ADBE Transform Group").property("ADBE Position").expression =
+          "var amp=26; [value[0]+Math.cos(time*.55+index)*amp, value[1]+Math.sin(time*.42+index)*amp*.45, value[2]];";
+        ly.property("ADBE Transform Group").property("ADBE Rotate Z").expression = "time*8 + index*12;";
+        MP.addOpacityAnimation(ly, 0, 100, 0.8 + i * 0.12, 0.8, "quadOut");
+      } else if (a.role === "title") {
+        MP.addPositionAnimation(ly, [0, -48], 1.8, 0.9, "expoOut");
+        MP.addOpacityAnimation(ly, 0, 100, 1.8, 0.65, "expoOut");
+      } else if (a.role === "cta") {
+        MP.addPositionAnimation(ly, [0, 92], ${Math.max(1.5, opts.duration - 3.2)}, 0.85, "backOut");
+        MP.addOpacityAnimation(ly, 0, 100, ${Math.max(1.5, opts.duration - 3.2)}, 0.55, "quadOut");
+        ly.property("ADBE Transform Group").property("ADBE Scale").expression =
+          "var p=Math.sin(time*Math.PI*2*.7)*1.4; [value[0]+p,value[1]+p,value[2]+p];";
+      }
+    }
+
+    var cam = comp.layers.addCamera("MotionPilot Camera", [MANIFEST.width / 2, MANIFEST.height / 2]);
+    cam.property("ADBE Transform Group").property("ADBE Position").setValue([MANIFEST.width / 2, MANIFEST.height / 2, -1350]);
+    cam.property("ADBE Camera Options Group").property("ADBE Camera Zoom").setValue(980);
+    MP.addCameraPush(comp, 0, ${opts.duration}, 180, "sineInOut");
+
+    var light = comp.layers.addLight("MotionPilot Key Light", [MANIFEST.width * 0.3, MANIFEST.height * 0.25]);
+    light.lightType = LightType.PARALLEL;
+    light.property("ADBE Light Options Group").property("ADBE Light Intensity").setValue(90);
+    light.property("ADBE Transform Group").property("ADBE Position").setValue([MANIFEST.width * 0.2, MANIFEST.height * 0.2, -500]);
+
+    try { comp.motionBlur = true; } catch (e) {}
+    app.endUndoGroup();
+    __result.output = MP.saveProject(${jstr(opts.outputAepPath)});
+  `;
+  return withReport(body);
+}

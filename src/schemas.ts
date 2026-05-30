@@ -69,6 +69,24 @@ export const createVideoPromptPackageSchema = {
     .describe("Optional path to save the generated prompt package JSON."),
 };
 
+export const createImageAssetPackSchema = {
+  prompt: z.string().min(8).describe("Visual concept for procedural image assets."),
+  outputFolder: z.string().describe("Folder where generated PNG assets and asset-manifest.json are written."),
+  width: z.number().int().positive().default(1080),
+  height: z.number().int().positive().default(1920),
+  style: z.enum(["brandFilm", "educationAd", "tech3d", "abstract3d", "socialAd"]).default("brandFilm"),
+  palette: z.array(z.string()).optional().describe("Optional color palette as hex values or color words."),
+};
+
+export const create3dSceneFromAssetsSchema = {
+  assetManifestPath: z.string().describe("Path to asset-manifest.json produced by create_image_asset_pack."),
+  outputAepPath: z.string().describe("Path of the generated 3D/2.5D After Effects project."),
+  duration: z.number().positive().default(12),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MotionPilot_3D_Scene"),
+  approveOverwrite: z.boolean().default(false).describe("Must be true to overwrite outputAepPath."),
+};
+
 export const importPsdToAeSchema = {
   psdPath: z.string().describe("Absolute path to the source .psd file."),
   outputAepPath: z.string().describe("Path of the new .aep project to create."),
@@ -163,6 +181,12 @@ export type CreateMotionPlanInput = {
 };
 export type CreateVideoPromptPackageInput = {
   [K in keyof typeof createVideoPromptPackageSchema]: z.infer<(typeof createVideoPromptPackageSchema)[K]>;
+};
+export type CreateImageAssetPackInput = {
+  [K in keyof typeof createImageAssetPackSchema]: z.infer<(typeof createImageAssetPackSchema)[K]>;
+};
+export type Create3dSceneFromAssetsInput = {
+  [K in keyof typeof create3dSceneFromAssetsSchema]: z.infer<(typeof create3dSceneFromAssetsSchema)[K]>;
 };
 export type ImportPsdInput = {
   [K in keyof typeof importPsdToAeSchema]: z.infer<(typeof importPsdToAeSchema)[K]>;

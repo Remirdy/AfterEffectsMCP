@@ -7,6 +7,8 @@ import {
   analyzePsdVisualsSchema,
   createMotionPlanSchema,
   createVideoPromptPackageSchema,
+  createImageAssetPackSchema,
+  create3dSceneFromAssetsSchema,
   importPsdToAeSchema,
   animateAeProjectSchema,
   renderPreviewSchema,
@@ -15,6 +17,8 @@ import {
   AnalyzePsdInput,
   CreateMotionPlanInput,
   CreateVideoPromptPackageInput,
+  CreateImageAssetPackInput,
+  Create3dSceneFromAssetsInput,
   ImportPsdInput,
   AnimateInput,
   RenderInput,
@@ -24,11 +28,13 @@ import {
 import { analyzePsd } from "./psd/analyzer.js";
 import { buildMotionPlan } from "./motion/planner.js";
 import { buildVideoPromptPackage } from "./video/promptPackage.js";
+import { createImageAssetPack } from "./assets/generator.js";
 import {
   generateImportJsx,
   generateAnimateJsx,
   generateRenderJsx,
   generateExecuteActionsJsx,
+  generateCreate3dSceneJsx,
 } from "./ae/jsxGenerator.js";
 import { resolveAerender, resolveAfterEffects, runJsx, runAerender } from "./ae/runner.js";
 import {
@@ -154,7 +160,75 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 4: import_psd_to_after_effects
+ * Tool 4: create_image_asset_pack
+ * ------------------------------------------------------------------ */
+server.tool(
+  "create_image_asset_pack",
+  "Generate a procedural PNG asset pack from a visual prompt: background, hero object, " +
+    "connection rings, kinetic streaks, title plate, and CTA plate. Returns an asset manifest " +
+    "that can be converted into a 3D/2.5D After Effects scene.",
+  createImageAssetPackSchema,
+  async (args: CreateImageAssetPackInput) => {
+    const log = new OpLog();
+    try {
+      const pack = await createImageAssetPack(args);
+      log.info(`Generated ${pack.assets.length} image assets: ${args.outputFolder}`);
+      return textResult({ ...pack, log: log.all });
+    } catch (e) {
+      return errorResult(`create_image_asset_pack failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 5: create_3d_scene_from_assets
+ * ------------------------------------------------------------------ */
+server.tool(
+  "create_3d_scene_from_assets",
+  "Create a 3D/2.5D After Effects project from an asset manifest. Imports generated images, " +
+    "places them as 3D layers with Z-depth, adds camera, light, parallax/orbit expressions, " +
+    "and saves a new AEP. Does not render.",
+  create3dSceneFromAssetsSchema,
+  async (args: Create3dSceneFromAssetsInput) => {
+    const log = new OpLog();
+    try {
+      await assertFile(args.assetManifestPath, "asset manifest");
+      await guardOverwrite(args.outputAepPath, args.approveOverwrite);
+      await ensureDir(path.dirname(args.outputAepPath));
+      const manifest = await readJson<{
+        width: number;
+        height: number;
+        assets: Array<{ name: string; path: string; role: string; z: number; scale: number; position: [number, number] }>;
+      }>(args.assetManifestPath);
+      const jsx = generateCreate3dSceneJsx({
+        manifest,
+        outputAepPath: args.outputAepPath,
+        duration: args.duration,
+        fps: args.fps,
+        compName: args.compName,
+      });
+      const result = await runJsx(jsx, log);
+      if (!result.ok) {
+        return errorResult(
+          `create_3d_scene_from_assets failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+          log
+        );
+      }
+      return textResult({
+        ok: true,
+        outputAepPath: result.output || args.outputAepPath,
+        compName: args.compName,
+        aeLog: result.jsxLog,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`create_3d_scene_from_assets failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 6: import_psd_to_after_effects
  * ------------------------------------------------------------------ */
 server.tool(
   "import_psd_to_after_effects",
@@ -197,7 +271,7 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 5: animate_after_effects_project
+ * Tool 7: animate_after_effects_project
  * ------------------------------------------------------------------ */
 server.tool(
   "animate_after_effects_project",
@@ -242,7 +316,7 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 6: render_preview
+ * Tool 8: render_preview
  * ------------------------------------------------------------------ */
 server.tool(
   "render_preview",
@@ -299,7 +373,7 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 7: check_after_effects_setup
+ * Tool 9: check_after_effects_setup
  * ------------------------------------------------------------------ */
 server.tool(
   "check_after_effects_setup",
@@ -338,7 +412,7 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 8: execute_after_effects_actions
+ * Tool 10: execute_after_effects_actions
  * ------------------------------------------------------------------ */
 server.tool(
   "execute_after_effects_actions",
