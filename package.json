@@ -12,7 +12,7 @@
     "watch": "tsc --watch",
     "start": "node dist/index.js",
     "dev": "node --loader ts-node/esm src/index.ts",
-    "demo:gif": "node scripts/generate-demo-gif.mjs",
+    "demo:before-after": "node scripts/generate-before-after-gif.mjs",
     "typecheck": "tsc --noEmit",
     "ci": "npm run typecheck && npm run build"
   },
@@ -41,6 +41,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.5.0",
+    "ffmpeg-static": "^5.3.0",
     "gif-encoder-2": "^1.0.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.2"
