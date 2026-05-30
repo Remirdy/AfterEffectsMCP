@@ -6,6 +6,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import {
   analyzePsdVisualsSchema,
   createMotionPlanSchema,
+  createVideoPromptPackageSchema,
   importPsdToAeSchema,
   animateAeProjectSchema,
   renderPreviewSchema,
@@ -13,6 +14,7 @@ import {
   executeAeActionsSchema,
   AnalyzePsdInput,
   CreateMotionPlanInput,
+  CreateVideoPromptPackageInput,
   ImportPsdInput,
   AnimateInput,
   RenderInput,
@@ -21,6 +23,7 @@ import {
 } from "./schemas.js";
 import { analyzePsd } from "./psd/analyzer.js";
 import { buildMotionPlan } from "./motion/planner.js";
+import { buildVideoPromptPackage } from "./video/promptPackage.js";
 import {
   generateImportJsx,
   generateAnimateJsx,
@@ -122,7 +125,36 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 3: import_psd_to_after_effects
+ * Tool 3: create_video_prompt_package
+ * ------------------------------------------------------------------ */
+server.tool(
+  "create_video_prompt_package",
+  "Create a prompt-to-video package from a natural-language concept and optional reference URL: " +
+    "creative brief, beat/shot list, AI-video prompts, and After Effects motion direction. " +
+    "This does not call a video model or copy the reference; it prepares production-ready prompts.",
+  createVideoPromptPackageSchema,
+  async (args: CreateVideoPromptPackageInput) => {
+    const log = new OpLog();
+    try {
+      const pkg = buildVideoPromptPackage(args);
+      if (args.outputJsonPath) {
+        await ensureDir(path.dirname(args.outputJsonPath));
+        await writeJson(args.outputJsonPath, pkg);
+        log.info(`Wrote video prompt package: ${args.outputJsonPath}`);
+      }
+      return textResult({
+        ...pkg,
+        outputJsonPath: args.outputJsonPath ?? null,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`create_video_prompt_package failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 4: import_psd_to_after_effects
  * ------------------------------------------------------------------ */
 server.tool(
   "import_psd_to_after_effects",
@@ -165,7 +197,7 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 4: animate_after_effects_project
+ * Tool 5: animate_after_effects_project
  * ------------------------------------------------------------------ */
 server.tool(
   "animate_after_effects_project",
@@ -210,7 +242,7 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 5: render_preview
+ * Tool 6: render_preview
  * ------------------------------------------------------------------ */
 server.tool(
   "render_preview",
@@ -267,7 +299,7 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 6: check_after_effects_setup
+ * Tool 7: check_after_effects_setup
  * ------------------------------------------------------------------ */
 server.tool(
   "check_after_effects_setup",
@@ -306,7 +338,7 @@ server.tool(
 );
 
 /* ------------------------------------------------------------------ *
- * Tool 7: execute_after_effects_actions
+ * Tool 8: execute_after_effects_actions
  * ------------------------------------------------------------------ */
 server.tool(
   "execute_after_effects_actions",

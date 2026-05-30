@@ -57,6 +57,7 @@ run by the AE binary (`aerender` for headless rendering when available).
 | --- | --- |
 | `analyze_psd_visuals` | Flattened preview + per-layer thumbnails; extract name/order/bounds/opacity/visibility/type; detect naming patterns (`BG_`, `Text_`, `Title_`, `Subtitle_`, `Phone_`, `Mockup_`, `Card_`, `Button_`, `Icon_`, `Logo_`, `Particle_`, `Character_`, `LOCKED`); suggest a role + animation per layer; return structured JSON + image paths. |
 | `create_motion_plan_from_analysis` | Turn the analysis + motion direction into a structured, hierarchy-aware motion plan. Never changes text; locked/text layers animate via transform/mask/range-selector only. |
+| `create_video_prompt_package` | Turn a prompt and optional reference URL into a production-ready video package: creative brief, beat/shot list, AI-video prompts, and After Effects motion direction. |
 | `import_psd_to_after_effects` | Open AE, import the PSD as a composition retaining layer sizes, set duration/FPS, save a new `.aep`. |
 | `animate_after_effects_project` | Apply the motion plan as keyframes + easing (position, scale, opacity, rotation, blur, masks, parallax, stagger, light sweep) and save a new animated `.aep`. |
 | `render_preview` | Render a comp to `.mp4`/`.mov` via `aerender` (or the AE render queue) and return logs + path. |
@@ -98,6 +99,21 @@ keyframes, and native AE properties:
 - `parallaxOrbit` — orbital parallax for depth layers
 - `breathBlur` — gentle breathing scale with animated blur
 - `typewriterFlicker` — text-safe flicker/reveal without changing source text
+
+### Prompt-to-video packages
+
+`create_video_prompt_package` prepares a structured package for brand films,
+social ads, abstract motion, product promos, or cinematic clips. It does not
+call a video model by itself; it creates:
+
+- creative brief
+- timed beat/shot list
+- AI-video prompts for short segments
+- After Effects motion direction using MotionPilot animation types
+- constraints and avoid notes for safer generation
+
+Reference URLs can be used for direction, but the package is designed to avoid
+copying the source video.
 
 ### General AE actions
 

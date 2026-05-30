@@ -45,6 +45,30 @@ export const createMotionPlanSchema = {
     .describe("Optional path to write the motion plan JSON. Defaults next to the analysis file."),
 };
 
+export const createVideoPromptPackageSchema = {
+  prompt: z
+    .string()
+    .min(8)
+    .describe("Core prompt for the video or brand film concept."),
+  referenceUrl: z
+    .string()
+    .url()
+    .optional()
+    .describe("Optional reference URL for direction only. The package avoids copying the reference."),
+  brandName: z.string().optional().describe("Optional brand/project name."),
+  text: z.string().optional().describe("Optional short on-screen text to preserve verbatim."),
+  duration: z.number().positive().default(25).describe("Target total duration in seconds."),
+  format: z.enum(["vertical", "horizontal", "square"]).default("vertical"),
+  style: z
+    .enum(["brandFilm", "cinematic", "socialAd", "productPromo", "abstractMotion"])
+    .default("brandFilm"),
+  palette: z.array(z.string()).optional().describe("Optional color palette words or hex values."),
+  outputJsonPath: z
+    .string()
+    .optional()
+    .describe("Optional path to save the generated prompt package JSON."),
+};
+
 export const importPsdToAeSchema = {
   psdPath: z.string().describe("Absolute path to the source .psd file."),
   outputAepPath: z.string().describe("Path of the new .aep project to create."),
@@ -136,6 +160,9 @@ export type AnalyzePsdInput = {
 };
 export type CreateMotionPlanInput = {
   [K in keyof typeof createMotionPlanSchema]: z.infer<(typeof createMotionPlanSchema)[K]>;
+};
+export type CreateVideoPromptPackageInput = {
+  [K in keyof typeof createVideoPromptPackageSchema]: z.infer<(typeof createVideoPromptPackageSchema)[K]>;
 };
 export type ImportPsdInput = {
   [K in keyof typeof importPsdToAeSchema]: z.infer<(typeof importPsdToAeSchema)[K]>;
