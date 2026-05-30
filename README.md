@@ -1,5 +1,7 @@
 # motionpilot-ae-mcp
 
+![MotionPilot AE MCP demo](assets/demo.gif)
+
 A **local MCP server** for analyzing **PSD** files and building animated
 **Adobe After Effects** projects, with saved `.aep` output and optional
 `.mp4`/`.mov` previews.
