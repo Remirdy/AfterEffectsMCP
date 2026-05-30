@@ -1,0 +1,49 @@
+{
+  "name": "motionpilot-ae-mcp",
+  "version": "1.0.0",
+  "description": "Local MCP server that analyzes PSD files and automatically animates them in Adobe After Effects.",
+  "type": "module",
+  "bin": {
+    "motionpilot-ae-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "start": "node dist/index.js",
+    "dev": "node --loader ts-node/esm src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "ci": "npm run typecheck && npm run build"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "keywords": [
+    "mcp",
+    "after-effects",
+    "psd",
+    "animation",
+    "extendscript",
+    "jsx",
+    "motion-design",
+    "claude-desktop",
+    "extendscript"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "@napi-rs/canvas": "^1.0.0",
+    "ag-psd": "^21.0.0",
+    "sharp": "^0.33.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.6.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

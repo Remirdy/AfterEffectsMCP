@@ -1,0 +1,26 @@
+{
+  "composition": {
+    "width": 1080,
+    "height": 1920,
+    "duration": 10,
+    "fps": 30,
+    "name": "MotionPilot_Main"
+  },
+  "rules": {
+    "preserveTextContent": true,
+    "protectLockedLayers": true,
+    "avoidExcessiveEffects": true
+  },
+  "style": "premium",
+  "animations": [
+    { "target": "BG_", "type": "slowParallax", "start": 0, "duration": 10, "strength": 25, "ease": "quadInOut" },
+    { "target": "Logo_Brand", "type": "softReveal", "start": 0.2, "duration": 0.9, "ease": "quadOut" },
+    { "target": "Text_Title_LOCKED", "type": "slideFade", "from": "top", "start": 0.4, "duration": 0.8, "ease": "expoOut" },
+    { "target": "Subtitle_Tagline", "type": "slideFade", "from": "bottom", "start": 1.0, "duration": 0.7, "ease": "quadOut" },
+    { "target": "Phone_Main", "type": "slideScale", "from": "right", "start": 1.0, "duration": 1.1, "ease": "backOut", "strength": 90 },
+    { "target": "Card_", "type": "staggerPop", "start": 1.8, "duration": 0.5, "stagger": 0.15, "ease": "backOut" },
+    { "target": "Button_CTA", "type": "bounceIn", "start": 2.6, "duration": 0.5, "ease": "backOut" },
+    { "target": "Icon_Bell", "type": "floatLoop", "start": 1.5, "duration": 8.5, "strength": 10, "ease": "quadInOut" }
+  ],
+  "generatedAt": "2026-05-30T12:00:00.000Z"
+}

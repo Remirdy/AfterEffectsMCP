@@ -1,0 +1,21 @@
+node_modules/
+dist/
+*.log
+.DS_Store
+
+# Local MCP/client config with machine-specific absolute paths
+claude_desktop_config.json
+
+# Generated analysis/render/project outputs
+work/
+work_preview.png
+*.aep
+*.mp4
+*.mov
+
+# Local scratch scripts
+_*.mjs
+
+# Environment files
+.env
+.env.*

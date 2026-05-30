@@ -1,0 +1,99 @@
+# Example prompts
+
+## Full end-to-end (what the user types in the MCP client)
+
+> Analyze this PSD first. Look at the design, layer structure, text, mockups,
+> background, icons, and visual hierarchy. Then create a professional After
+> Effects animation where the title comes in smoothly, mockups slide with depth,
+> UI cards appear one by one, background has subtle parallax, and the project is
+> saved as an AEP file. Render an MP4 preview if possible.
+>
+> Rules: Do not rewrite, regenerate, translate, or change any text. Text layers
+> must stay readable and sharp and may only animate via position, opacity, scale,
+> mask reveal, or text animator range selector. Keep it elegant, premium, and
+> Behance-ready. Avoid excessive effects. Use smooth easing and clean timing.
+> Create a 10-second 9:16 composition at 1080x1920 at 30 FPS.
+
+## The AI client will call the tools in this order
+
+1. `analyze_psd_visuals`
+   ```json
+   {
+     "psdPath": "/Users/me/designs/app_promo.psd",
+     "outputAnalysisFolder": "/Users/me/designs/app_promo_analysis",
+     "includeLayerThumbnails": true,
+     "includeFlattenedPreview": true,
+     "includeTextLayerInfo": true
+   }
+   ```
+
+## Professional prompt variants
+
+Use prompts like these in `create_motion_plan_from_analysis.userPrompt`:
+
+```text
+Cinematic premium app launch animation. Add subtle camera push, layered depth,
+soft parallax, elegant text reveal, light sweep on the hero mockup, and
+Behance-ready timing. Keep text unchanged and readable.
+```
+
+```text
+Fast social ad for Reels/TikTok. Snappy product reveal, energetic staggered UI
+cards, bold headline animation, punchy button pop, clean loop-ready ambient
+motion. No text rewriting.
+```
+
+```text
+Minimal luxury portfolio motion. Slow elegant fades, restrained parallax, no
+excessive effects, subtle glow only on the logo, refined commercial timing.
+```
+   → returns `analysisJsonPath` + preview/thumbnail paths. The AI can read the
+   preview image to visually inspect the design.
+
+2. `create_motion_plan_from_analysis`
+   ```json
+   {
+     "analysisJsonPath": "/Users/me/designs/app_promo_analysis/analysis.json",
+     "userPrompt": "premium Behance-ready promo, title first, mockup with depth, staggered cards, subtle bg parallax",
+     "duration": 10,
+     "fps": 30,
+     "style": "premium"
+   }
+   ```
+   → returns `motionPlanJsonPath`.
+
+3. `import_psd_to_after_effects`
+   ```json
+   {
+     "psdPath": "/Users/me/designs/app_promo.psd",
+     "outputAepPath": "/Users/me/designs/app_promo.aep",
+     "width": 1080,
+     "height": 1920,
+     "duration": 10,
+     "fps": 30,
+     "importMode": "composition_retained_layer_sizes",
+     "approveOverwrite": true
+   }
+   ```
+
+4. `animate_after_effects_project`
+   ```json
+   {
+     "aepPath": "/Users/me/designs/app_promo.aep",
+     "motionPlanJsonPath": "/Users/me/designs/app_promo_analysis/motion-plan.json",
+     "outputAepPath": "/Users/me/designs/app_promo_animated.aep",
+     "preserveTextContent": true,
+     "approveOverwrite": true
+   }
+   ```
+
+5. `render_preview`
+   ```json
+   {
+     "aepPath": "/Users/me/designs/app_promo_animated.aep",
+     "compName": "MotionPilot_Main",
+     "outputVideoPath": "/Users/me/designs/app_promo_preview.mp4",
+     "format": "mp4",
+     "approveOverwrite": true
+   }
+   ```

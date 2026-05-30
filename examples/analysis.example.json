@@ -1,0 +1,65 @@
+{
+  "document": {
+    "width": 1080,
+    "height": 1920,
+    "layerCount": 34,
+    "previewPath": "/analysis/preview.png",
+    "sourcePsd": "/Users/me/designs/app_promo.psd"
+  },
+  "layers": [
+    {
+      "name": "BG_Gradient",
+      "type": "image",
+      "role": "background",
+      "bounds": { "x": 0, "y": 0, "width": 1080, "height": 1920 },
+      "visible": true,
+      "locked": false,
+      "opacity": 100,
+      "zIndex": 0,
+      "thumbnailPath": "/analysis/thumbnails/000_BG_Gradient.png",
+      "suggestedAnimation": "slowParallax"
+    },
+    {
+      "name": "Text_Title_LOCKED",
+      "type": "text",
+      "role": "locked_text",
+      "bounds": { "x": 120, "y": 140, "width": 840, "height": 110 },
+      "visible": true,
+      "locked": true,
+      "opacity": 100,
+      "zIndex": 12,
+      "text": { "text": "Ship faster with MotionPilot", "font": "Inter-Bold", "fontSize": 84, "color": "rgb(255, 255, 255)" },
+      "suggestedAnimation": "slideFadeFromTop"
+    },
+    {
+      "name": "Phone_Main",
+      "type": "image",
+      "role": "phone_mockup",
+      "bounds": { "x": 210, "y": 480, "width": 660, "height": 980 },
+      "visible": true,
+      "locked": false,
+      "opacity": 100,
+      "zIndex": 18,
+      "thumbnailPath": "/analysis/thumbnails/018_Phone_Main.png",
+      "suggestedAnimation": "slideScaleFromRight"
+    },
+    {
+      "name": "Card_Stats",
+      "type": "image",
+      "role": "ui_card",
+      "bounds": { "x": 80, "y": 1500, "width": 420, "height": 240 },
+      "visible": true,
+      "locked": false,
+      "opacity": 100,
+      "zIndex": 22,
+      "suggestedAnimation": "staggerPop"
+    }
+  ],
+  "visualSuggestions": [
+    "Use background parallax because there are separated BG layers.",
+    "Use staggered card reveal because multiple Card_ layers were detected.",
+    "Slide the main mockup in with scale + light blur for cinematic depth.",
+    "Protect all LOCKED text layers and only animate transform properties."
+  ],
+  "generatedAt": "2026-05-30T12:00:00.000Z"
+}
