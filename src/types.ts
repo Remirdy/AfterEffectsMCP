@@ -79,7 +79,15 @@ export type AnimationType =
   | "depthDrift"
   | "scalePulse"
   | "ambientGlow"
-  | "cameraPush";
+  | "cameraPush"
+  | "magneticSnap"
+  | "liquidDrift"
+  | "cinematicJitter"
+  | "microShake"
+  | "revealWipeBlur"
+  | "parallaxOrbit"
+  | "breathBlur"
+  | "typewriterFlicker";
 
 export type Direction = "top" | "bottom" | "left" | "right";
 

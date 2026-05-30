@@ -84,6 +84,21 @@ Additional animation types available to generated plans:
 `blurFade`, `overshootPop`, `rotateIn`, `depthDrift`, `scalePulse`,
 `ambientGlow`, and `cameraPush`.
 
+### Procedural custom motion
+
+MotionPilot can also generate custom motion behaviors that are not standard
+After Effects animation presets. These are built from procedural expressions,
+keyframes, and native AE properties:
+
+- `magneticSnap` — overshooting snap-in with position and scale tension
+- `liquidDrift` — organic drifting motion for backgrounds and accents
+- `cinematicJitter` — subtle handheld-style movement
+- `microShake` — controlled impact shake for CTA or emphasis moments
+- `revealWipeBlur` — wipe reveal with blur cleanup
+- `parallaxOrbit` — orbital parallax for depth layers
+- `breathBlur` — gentle breathing scale with animated blur
+- `typewriterFlicker` — text-safe flicker/reveal without changing source text
+
 ### General AE actions
 
 `execute_after_effects_actions` runs a batch of actions against either a new

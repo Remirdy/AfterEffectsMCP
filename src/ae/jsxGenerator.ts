@@ -209,6 +209,90 @@ function emitAnimation(a: MotionAnimation): string {
       return `MP.addAmbientGlow(ly, ${t0}, ${dur}, ${a.strength ?? 35}, ${ease});`;
     case "cameraPush":
       return `MP.addCameraPush(comp, ${t0}, ${dur}, ${a.strength ?? 120}, ${ease});`;
+    case "magneticSnap": {
+      const [ox, oy] = offsetForDirection(a.from, a.strength ?? 70);
+      return `
+        (function () {
+          var tg = ly.property("ADBE Transform Group");
+          var pos = tg.property("ADBE Position");
+          var sc = tg.property("ADBE Scale");
+          var base = pos.value;
+          pos.setValueAtTime(${t0}, [base[0] + ${ox}, base[1] + ${oy}]);
+          pos.setValueAtTime(${t0 + dur * 0.62}, [base[0] - ${ox * 0.08}, base[1] - ${oy * 0.08}]);
+          pos.setValueAtTime(${t0 + dur}, base);
+          sc.setValueAtTime(${t0}, [92, 92]);
+          sc.setValueAtTime(${t0 + dur * 0.62}, [103, 103]);
+          sc.setValueAtTime(${t0 + dur}, [100, 100]);
+          MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur * 0.45, 0.45)}, ${ease});
+          MP.setEase(pos, ${ease});
+          MP.setEase(sc, ${ease});
+        })();`;
+    }
+    case "liquidDrift":
+      return `
+        (function () {
+          var pos = ly.property("ADBE Transform Group").property("ADBE Position");
+          var amp = ${a.strength ?? 18};
+          try {
+            pos.expression = "var amp=" + amp + "; var sx=Math.sin(time*1.07+index)*amp; var sy=Math.sin(time*0.73+index*1.7)*amp*0.55; [value[0]+sx, value[1]+sy];";
+          } catch (e) { MP.log("liquidDrift expression failed: " + e.toString()); }
+        })();`;
+    case "cinematicJitter":
+      return `
+        (function () {
+          var pos = ly.property("ADBE Transform Group").property("ADBE Position");
+          var amt = ${a.strength ?? 5};
+          try {
+            pos.expression = "posterizeTime(12); var a=" + amt + "; var n=wiggle(2.4,a); [n[0],n[1]];";
+          } catch (e) { MP.log("cinematicJitter expression failed: " + e.toString()); }
+        })();`;
+    case "microShake":
+      return `
+        (function () {
+          var pos = ly.property("ADBE Transform Group").property("ADBE Position");
+          var rot = ly.property("ADBE Transform Group").property("ADBE Rotate Z");
+          var amt = ${a.strength ?? 4};
+          try {
+            pos.expression = "var a=" + amt + "; wiggle(7,a);";
+            rot.expression = "wiggle(6," + Math.max(0.3, (a.strength ?? 4) * 0.12) + ");";
+          } catch (e) { MP.log("microShake expression failed: " + e.toString()); }
+        })();`;
+    case "revealWipeBlur":
+      return `
+        MP.addMaskReveal(ly, ${jstr(a.from ?? "left")}, ${t0}, ${dur}, ${ease});
+        MP.addBlurAnimation(ly, ${a.strength ?? 20}, 0, ${t0}, ${dur}, ${ease});
+        MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur * 0.55, 0.55)}, ${ease});`;
+    case "parallaxOrbit":
+      return `
+        (function () {
+          var pos = ly.property("ADBE Transform Group").property("ADBE Position");
+          var amp = ${a.strength ?? 24};
+          try {
+            pos.expression = "var amp=" + amp + "; var sp=.22; [value[0]+Math.cos(time*Math.PI*2*sp+index)*amp, value[1]+Math.sin(time*Math.PI*2*sp+index)*amp*.45];";
+          } catch (e) { MP.log("parallaxOrbit expression failed: " + e.toString()); }
+        })();`;
+    case "breathBlur":
+      return `
+        (function () {
+          MP.addScaleAnimation(ly, 98, 101, ${t0}, ${dur * 0.5}, "sineInOut");
+          MP.addScaleAnimation(ly, 101, 100, ${t0 + dur * 0.5}, ${dur * 0.5}, "sineInOut");
+          try {
+            var fx = ly.property("ADBE Effect Parade");
+            var blur = fx.addProperty("ADBE Gaussian Blur 2");
+            var amt = blur.property("ADBE Gaussian Blur 2-0001");
+            amt.expression = "1.8 + Math.sin(time*Math.PI*2*.28+index)*1.2;";
+          } catch (e) { MP.log("breathBlur blur failed: " + e.toString()); }
+        })();`;
+    case "typewriterFlicker":
+      return `
+        (function () {
+          MP.protectTextLayer(ly);
+          MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur, 0.9)}, ${ease});
+          try {
+            var op = ly.property("ADBE Transform Group").property("ADBE Opacity");
+            op.expression = "var gate=time<" + (${t0} + ${dur}) + "; gate ? value + Math.sin(time*38+index)*7 : value;";
+          } catch (e) { MP.log("typewriterFlicker expression failed: " + e.toString()); }
+        })();`;
     default:
       return `MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${dur}, ${ease});`;
   }
