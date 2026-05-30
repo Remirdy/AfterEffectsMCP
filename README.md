@@ -221,6 +221,10 @@ Restart the host application; the tools appear automatically.
 Run `check_after_effects_setup` first. It should return the resolved After
 Effects app path and `aerender` path before you run import/animate/render tools.
 
+More host examples are available in [`docs/integrations.md`](./docs/integrations.md),
+including Claude Desktop, Cursor, VS Code Copilot Agent mode, Codex, and notes
+for ChatGPT/OpenAI remote MCP support.
+
 ---
 
 ## Example outputs & motion directions
@@ -229,6 +233,7 @@ Effects app path and `aerender` path before you run import/animate/render tools.
 - [`examples/motion-plan.example.json`](./examples/motion-plan.example.json)
 - [`examples/prompts.md`](./examples/prompts.md) — full end-to-end direction and the
   exact tool-call sequence.
+- [`examples/mcp/`](./examples/mcp/) — MCP host configuration templates.
 
 ---
 

@@ -1,0 +1,7 @@
+[mcp_servers.motionpilot-ae]
+command = "node"
+args = ["/ABSOLUTE/PATH/TO/motionpilot-ae-mcp/dist/index.js"]
+
+[mcp_servers.motionpilot-ae.env]
+AE_BINARY = "/Applications/Adobe After Effects 2025/Adobe After Effects 2025.app"
+AERENDER_BINARY = "/Applications/Adobe After Effects 2025/Adobe After Effects 2025.app/Contents/aerender"

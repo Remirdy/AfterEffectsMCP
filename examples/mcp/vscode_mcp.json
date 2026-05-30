@@ -1,0 +1,13 @@
+{
+  "servers": {
+    "motionpilot-ae": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/motionpilot-ae-mcp/dist/index.js"],
+      "env": {
+        "AE_BINARY": "/Applications/Adobe After Effects 2025/Adobe After Effects 2025.app",
+        "AERENDER_BINARY": "/Applications/Adobe After Effects 2025/Adobe After Effects 2025.app/Contents/aerender"
+      }
+    }
+  }
+}
