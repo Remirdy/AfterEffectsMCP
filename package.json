@@ -4,14 +4,17 @@
   "description": "Local MCP server that analyzes PSD files and automatically animates them in Adobe After Effects.",
   "type": "module",
   "bin": {
-    "motionpilot-ae-mcp": "dist/index.js"
+    "motionpilot-ae-mcp": "dist/index.js",
+    "motionpilot-ae-mcp-http": "dist/http.js"
   },
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
     "watch": "tsc --watch",
     "start": "node dist/index.js",
+    "start:http": "node dist/http.js",
     "dev": "node --loader ts-node/esm src/index.ts",
+    "dev:http": "node --loader ts-node/esm src/http.ts",
     "demo:before-after": "node scripts/generate-before-after-gif.mjs",
     "typecheck": "tsc --noEmit",
     "ci": "npm run typecheck && npm run build"
@@ -36,10 +39,12 @@
     "@modelcontextprotocol/sdk": "^1.0.4",
     "@napi-rs/canvas": "^1.0.0",
     "ag-psd": "^21.0.0",
+    "express": "^5.0.0",
     "sharp": "^0.33.5",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/express": "^5.0.0",
     "@types/node": "^22.5.0",
     "ffmpeg-static": "^5.3.0",
     "gif-encoder-2": "^1.0.5",

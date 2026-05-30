@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 
@@ -49,10 +50,16 @@ import {
 } from "./util.js";
 import { AnalysisReport, MotionPlan } from "./types.js";
 
-const server = new McpServer({
-  name: "motionpilot-ae-mcp",
-  version: "1.0.0",
-});
+/**
+ * Build a fully-configured MotionPilot AE MCP server instance with all tools
+ * registered. Shared by the stdio entrypoint (this file) and the remote HTTP
+ * entrypoint (`http.ts`, used by ChatGPT custom connectors / OpenAI API).
+ */
+export function createMcpServer(): McpServer {
+  const server = new McpServer({
+    name: "motionpilot-ae-mcp",
+    version: "1.0.0",
+  });
 
 /* ------------------------------------------------------------------ *
  * Tool 1: analyze_psd_visuals
@@ -461,14 +468,25 @@ server.tool(
   }
 );
 
+  return server;
+}
+
 /* ------------------------------------------------------------------ */
 async function main() {
+  const server = createMcpServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
   process.stderr.write("motionpilot-ae-mcp running on stdio\n");
 }
 
-main().catch((e) => {
-  process.stderr.write(`Fatal: ${(e as Error).stack ?? e}\n`);
-  process.exit(1);
-});
+// Only auto-launch the stdio transport when this file is run directly
+// (e.g. `node dist/index.js`). When imported by `http.ts`, do nothing.
+const isDirectRun =
+  process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isDirectRun) {
+  main().catch((e) => {
+    process.stderr.write(`Fatal: ${(e as Error).stack ?? e}\n`);
+    process.exit(1);
+  });
+}

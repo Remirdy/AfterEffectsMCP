@@ -1,0 +1,20 @@
+{
+  "_comment": "Remote MotionPilot AE MCP for ChatGPT custom connectors / OpenAI Responses API. Start the server with `npm run start:http` (optionally set MOTIONPILOT_HTTP_TOKEN), expose http://127.0.0.1:8787/mcp through a tunnel (cloudflared/ngrok), then use the public /mcp URL below.",
+  "server_label": "motionpilot-ae",
+  "server_url": "https://YOUR-TUNNEL-HOST/mcp",
+  "transport": "streamable-http",
+  "headers": {
+    "Authorization": "Bearer YOUR_MOTIONPILOT_HTTP_TOKEN"
+  },
+  "local_server": {
+    "command": "npm",
+    "args": ["run", "start:http"],
+    "env": {
+      "PORT": "8787",
+      "HOST": "127.0.0.1",
+      "MOTIONPILOT_HTTP_TOKEN": "choose-a-long-secret",
+      "AE_BINARY": "/Applications/Adobe After Effects 2026/Adobe After Effects 2026.app",
+      "AERENDER_BINARY": "/Applications/Adobe After Effects 2026/Adobe After Effects 2026.app/Contents/aerender"
+    }
+  }
+}

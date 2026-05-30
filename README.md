@@ -288,6 +288,85 @@ for ChatGPT/OpenAI remote MCP support.
 
 ---
 
+## Run as a remote server (ChatGPT / OpenAI API)
+
+Local hosts (Claude Desktop, Cursor, VS Code, Codex) launch the server over
+**stdio** with `dist/index.js`. ChatGPT custom connectors and the OpenAI
+Responses API instead need a **remote Streamable HTTP** URL, so the project also
+ships an HTTP entrypoint (`dist/http.js`) that exposes the same tools.
+
+```bash
+npm install
+npm run build
+
+# Localhost only, no auth (first local test):
+npm run start:http
+# -> motionpilot-ae-mcp HTTP transport on http://127.0.0.1:8787/mcp
+
+# Recommended when exposing it — require a bearer token:
+MOTIONPILOT_HTTP_TOKEN="choose-a-long-secret" npm run start:http
+```
+
+| Env var | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `8787` | HTTP port. |
+| `HOST` | `127.0.0.1` | Bind address. Use `0.0.0.0` only behind a tunnel/proxy. |
+| `MOTIONPILOT_HTTP_TOKEN` | _(unset)_ | If set, every request must send `Authorization: Bearer <token>`. |
+| `AE_BINARY` / `AERENDER_BINARY` | auto-detect | After Effects paths. |
+
+Then expose it over HTTPS and connect ChatGPT:
+
+```bash
+cloudflared tunnel --url http://127.0.0.1:8787   # or: ngrok http 8787
+```
+
+In **ChatGPT → Settings → Connectors → Add custom connector**, set the MCP
+server URL to `https://<tunnel-host>/mcp` (and the bearer token if you enabled
+one). Full walkthrough + an OpenAI Responses API snippet:
+[`docs/integrations.md`](./docs/integrations.md) and
+[`examples/mcp/chatgpt_remote.json`](./examples/mcp/chatgpt_remote.json).
+
+> ⚠️ This server can open After Effects, write `.aep` files, render video, and
+> delete layers. **Never expose it publicly without a bearer token and a
+> controlled tunnel.**
+
+---
+
+## Compatibility
+
+**Operating systems**
+
+| OS | Status | Notes |
+| --- | --- | --- |
+| macOS (Apple Silicon & Intel) | ✅ Supported | After Effects path under `/Applications/...`. |
+| Windows 10 / 11 | ✅ Supported | After Effects path under `C:\Program Files\Adobe\...`. |
+| Linux | ⚠️ Partial | PSD analysis + motion-plan + video/asset tools work; AE-driven tools (import/animate/render) require After Effects, which Adobe does not ship for Linux. |
+
+**Runtime**
+
+- Node.js ≥ 18 (Node 20 LTS recommended).
+- Adobe After Effects 2023 or newer for the AE tools. The `analyze_psd_visuals`,
+  `create_motion_plan_from_analysis`, `create_video_prompt_package`,
+  `create_image_asset_pack` tools run without After Effects.
+
+**MCP hosts / clients**
+
+| Client | Transport | Status |
+| --- | --- | --- |
+| Claude Desktop | stdio | ✅ |
+| Cursor | stdio | ✅ |
+| VS Code Copilot Agent mode | stdio | ✅ |
+| Codex CLI / IDE | stdio | ✅ |
+| ChatGPT custom connectors | remote Streamable HTTP | ✅ (`npm run start:http` + tunnel) |
+| OpenAI Responses API `mcp` tool | remote Streamable HTTP | ✅ |
+
+> The bundled `node_modules` and `dist/` are **not** committed (see
+> `.gitignore`). On any machine, clone the repo then run `npm install` +
+> `npm run build` so native modules (`sharp`, `@napi-rs/canvas`) compile for
+> that platform.
+
+---
+
 ## Example outputs & motion directions
 
 - [`examples/analysis.example.json`](./examples/analysis.example.json)
