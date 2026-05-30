@@ -1,6 +1,8 @@
 # motionpilot-ae-mcp
 
-![MotionPilot AE MCP before and after](assets/before-after.gif)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Remirdy/AfterEffectsMCP/main/assets/before-after.gif" alt="MotionPilot AE MCP before and after" width="760">
+</p>
 
 A **local MCP server** for analyzing **PSD** files and building animated
 **Adobe After Effects** projects, with saved `.aep` output and optional
