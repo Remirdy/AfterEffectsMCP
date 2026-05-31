@@ -15,6 +15,16 @@ import {
   renderPreviewSchema,
   checkAfterEffectsSetupSchema,
   executeAeActionsSchema,
+  listVfxPresetsSchema,
+  applyVfxSchema,
+  createVfxCompositionSchema,
+  buildComplexVfxSchema,
+  createGameVfxFromPromptSchema,
+  ListVfxPresetsInput,
+  ApplyVfxInput,
+  CreateVfxCompositionInput,
+  BuildComplexVfxInput,
+  CreateGameVfxFromPromptInput,
   AnalyzePsdInput,
   CreateMotionPlanInput,
   CreateVideoPromptPackageInput,
@@ -37,6 +47,9 @@ import {
   generateExecuteActionsJsx,
   generateCreate3dSceneJsx,
 } from "./ae/jsxGenerator.js";
+import { generateApplyVfxJsx, generateCreateVfxCompJsx, generateComplexVfxJsx, generatePromptVfxJsx } from "./ae/vfxGenerator.js";
+import { listVfxPresets, listVfxComposites, VfxDomain } from "./vfx/presets.js";
+import { buildVfxPlanFromPrompt } from "./vfx/vfxPlanner.js";
 import { resolveAerender, resolveAfterEffects, runJsx, runAerender } from "./ae/runner.js";
 import {
   OpLog,
@@ -464,6 +477,258 @@ server.tool(
       });
     } catch (e) {
       return errorResult(`execute_after_effects_actions failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 11: list_vfx_presets
+ * ------------------------------------------------------------------ */
+server.tool(
+  "list_vfx_presets",
+  "List the professional VFX presets available across four domains — game (energy bursts, " +
+    "shockwaves, magic circles, power auras, hit sparks), cinema (atmospheric fog, volumetric " +
+    "light rays, lens flares, procedural fire/smoke, energy beams, film grain, cinematic grade), " +
+    "and social (glitch, chromatic aberration, neon glow, whip-pan, kinetic pop). Each preset is " +
+    "hybrid: it uses premium plugins (Trapcode Particular, Saber, Optical Flares) when present and " +
+    "falls back to stock After Effects effects otherwise.",
+  listVfxPresetsSchema,
+  async (args: ListVfxPresetsInput) => {
+    const presets = listVfxPresets(args.domain as VfxDomain | undefined);
+    const composites = args.includeComposites
+      ? listVfxComposites(args.domain as VfxDomain | undefined)
+      : [];
+    return textResult({
+      ok: true,
+      count: presets.length,
+      compositeCount: composites.length,
+      domains: ["game", "cinema", "social", "ad"],
+      presets: presets.map((p) => ({
+        id: p.id,
+        domain: p.domain,
+        name: p.name,
+        description: p.description,
+        targetMode: p.targetMode,
+        defaults: p.defaults,
+        premiumPlugin: p.premiumPlugin ?? null,
+      })),
+      composites: composites.map((c) => ({
+        id: c.id,
+        domain: c.domain,
+        name: c.name,
+        description: c.description,
+        steps: c.steps,
+        usage: "build_complex_vfx",
+      })),
+    });
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 12: apply_vfx
+ * ------------------------------------------------------------------ */
+server.tool(
+  "apply_vfx",
+  "Apply one or more professional VFX presets to an existing AEP composition and save a new copy. " +
+    "Comp-mode presets (e.g. energy_burst, shockwave, fire, fog, light_rays) spawn their own layers; " +
+    "layer-mode presets (e.g. neon_glow, power_aura, kinetic_pop, glitch) decorate a targetLayer. " +
+    "Effects are hybrid (premium plugins when available, stock fallback otherwise) and never modify " +
+    "source text. Use list_vfx_presets to discover preset ids and parameters.",
+  applyVfxSchema,
+  async (args: ApplyVfxInput) => {
+    const log = new OpLog();
+    try {
+      await assertFile(args.aepPath, "AEP");
+      await guardOverwrite(args.outputAepPath, args.approveOverwrite);
+      await ensureDir(path.dirname(args.outputAepPath));
+
+      const jsx = generateApplyVfxJsx({
+        aepPath: args.aepPath,
+        compName: args.compName,
+        outputAepPath: args.outputAepPath,
+        applications: args.vfx as any,
+      });
+      const result = await runJsx(jsx, log);
+      if (!result.ok) {
+        return errorResult(
+          `apply_vfx failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+          log
+        );
+      }
+      return textResult({
+        ok: true,
+        outputAepPath: result.output || args.outputAepPath,
+        appliedVfx: args.vfx.map((v) => v.presetId),
+        aeLog: result.jsxLog,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`apply_vfx failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 13: create_vfx_composition
+ * ------------------------------------------------------------------ */
+server.tool(
+  "create_vfx_composition",
+  "Create a brand-new After Effects project containing a standalone, reusable VFX element " +
+    "composition (e.g. an explosion, magic circle, fog plate, fire column, or laser beam) built " +
+    "from one or more VFX presets, then save the AEP. Ideal for building a VFX element library " +
+    "that can be composited into other projects.",
+  createVfxCompositionSchema,
+  async (args: CreateVfxCompositionInput) => {
+    const log = new OpLog();
+    try {
+      await guardOverwrite(args.outputAepPath, args.approveOverwrite);
+      await ensureDir(path.dirname(args.outputAepPath));
+
+      const jsx = generateCreateVfxCompJsx({
+        outputAepPath: args.outputAepPath,
+        compName: args.compName,
+        width: args.width,
+        height: args.height,
+        duration: args.duration,
+        fps: args.fps,
+        backgroundColor: args.backgroundColor as [number, number, number] | undefined,
+        applications: args.vfx as any,
+      });
+      const result = await runJsx(jsx, log);
+      if (!result.ok) {
+        return errorResult(
+          `create_vfx_composition failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+          log
+        );
+      }
+      return textResult({
+        ok: true,
+        outputAepPath: result.output || args.outputAepPath,
+        compName: args.compName,
+        appliedVfx: args.vfx.map((v) => v.presetId),
+        aeLog: result.jsxLog,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`create_vfx_composition failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 14: build_complex_vfx
+ * ------------------------------------------------------------------ */
+server.tool(
+  "build_complex_vfx",
+  "Build DETAILED, production-grade COMPOSITE VFX in a single call — each recipe stacks many " +
+    "layers and effects into one professional result with an intensity control. Recipes: " +
+    "'cinematicExplosion' (flash+fireball+fire+smoke+shockwave+sparks+grade), 'magicCast' " +
+    "(charge+arcane circle+lightning+shockwave), 'heroEntrance' (light rays+lens flare+fog+bokeh+grade), " +
+    "'celebration' (confetti+bursts+bokeh+light leak), 'powerSurge' (force field+lightning+plexus+charge), " +
+    "'stormScene' (rain+fog+lightning+grade). Works on an existing AEP or creates a fresh comp. " +
+    "Hybrid: premium plugins when present, stock fallback otherwise. Source text is never modified.",
+  buildComplexVfxSchema,
+  async (args: BuildComplexVfxInput) => {
+    const log = new OpLog();
+    try {
+      if (args.aepPath) await assertFile(args.aepPath, "AEP");
+      await guardOverwrite(args.outputAepPath, args.approveOverwrite);
+      await ensureDir(path.dirname(args.outputAepPath));
+
+      const jsx = generateComplexVfxJsx({
+        aepPath: args.aepPath,
+        compName: args.compName,
+        outputAepPath: args.outputAepPath,
+        newComp: args.newComp,
+        composites: args.composites as any,
+      });
+      const result = await runJsx(jsx, log, { timeoutMs: 1000 * 60 * 5 });
+      if (!result.ok) {
+        return errorResult(
+          `build_complex_vfx failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+          log
+        );
+      }
+      return textResult({
+        ok: true,
+        outputAepPath: result.output || args.outputAepPath,
+        appliedComposites: args.composites.map((c) => c.compositeId),
+        aeLog: result.jsxLog,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`build_complex_vfx failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 15: create_game_vfx_from_prompt
+ * ------------------------------------------------------------------ */
+server.tool(
+  "create_game_vfx_from_prompt",
+  "Create game-ready VFX directly from a natural-language prompt in English or Turkish. " +
+    "The prompt planner recognizes effects like explosion/patlama, fire/ateş, lightning/şimşek, " +
+    "portal, shield/kalkan, beam/lazer, shockwave, magic circle/büyü çemberi, aura, sword slash, " +
+    "hit sparks and muzzle flashes, infers color/intensity/format, then creates a standalone AEP " +
+    "or applies the VFX to an existing project.",
+  createGameVfxFromPromptSchema,
+  async (args: CreateGameVfxFromPromptInput) => {
+    const log = new OpLog();
+    try {
+      if (args.aepPath) await assertFile(args.aepPath, "AEP");
+      await guardOverwrite(args.outputAepPath, args.approveOverwrite);
+      await ensureDir(path.dirname(args.outputAepPath));
+
+      const plan = buildVfxPlanFromPrompt(args.prompt, {
+        targetLayer: args.targetLayer,
+        duration: args.duration,
+        fps: args.fps,
+        position: args.position as [number, number] | undefined,
+      });
+      if (args.width) plan.composition.width = args.width;
+      if (args.height) plan.composition.height = args.height;
+      if (args.compName) plan.composition.name = args.compName;
+      if (args.position == null) {
+        plan.steps.forEach((step) => {
+          if (!step.params) return;
+          if (Array.isArray(step.params.position)) {
+            step.params.position = [plan.composition.width / 2, plan.composition.height / 2];
+          }
+        });
+      }
+
+      if (args.outputPlanJsonPath) {
+        await ensureDir(path.dirname(args.outputPlanJsonPath));
+        await writeJson(args.outputPlanJsonPath, plan);
+        log.info(`Wrote prompt VFX plan: ${args.outputPlanJsonPath}`);
+      }
+
+      const jsx = generatePromptVfxJsx({
+        aepPath: args.aepPath,
+        compName: args.aepPath ? args.compName : undefined,
+        outputAepPath: args.outputAepPath,
+        plan,
+      });
+      const result = await runJsx(jsx, log, { timeoutMs: 1000 * 60 * 5 });
+      if (!result.ok) {
+        return errorResult(
+          `create_game_vfx_from_prompt failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+          log
+        );
+      }
+      return textResult({
+        ok: true,
+        outputAepPath: result.output || args.outputAepPath,
+        outputPlanJsonPath: args.outputPlanJsonPath ?? null,
+        plan,
+        matched: plan.matched,
+        notes: plan.notes,
+        aeLog: result.jsxLog,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`create_game_vfx_from_prompt failed: ${(e as Error).message}`, log);
     }
   }
 );

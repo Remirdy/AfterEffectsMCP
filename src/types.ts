@@ -87,7 +87,16 @@ export type AnimationType =
   | "revealWipeBlur"
   | "parallaxOrbit"
   | "breathBlur"
-  | "typewriterFlicker";
+  | "typewriterFlicker"
+  // --- advanced / VFX-grade motion (added for complex ad & social work) ---
+  | "elasticScale"
+  | "glitchIn"
+  | "neonFlicker"
+  | "chromaSplit"
+  | "flip3D"
+  | "energyTrail"
+  | "motionStreak"
+  | "kineticBounce";
 
 export type Direction = "top" | "bottom" | "left" | "right";
 

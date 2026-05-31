@@ -293,6 +293,87 @@ function emitAnimation(a: MotionAnimation): string {
             op.expression = "var gate=time<" + (${t0} + ${dur}) + "; gate ? value + Math.sin(time*38+index)*7 : value;";
           } catch (e) { MP.log("typewriterFlicker expression failed: " + e.toString()); }
         })();`;
+    case "elasticScale":
+      return `
+        (function () {
+          var sc = ly.property("ADBE Transform Group").property("ADBE Scale");
+          sc.setValueAtTime(${t0}, [0, 0]);
+          sc.setValueAtTime(${t0 + dur}, [100, 100]);
+          MP.setEase(sc, "elasticOut");
+          MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur, 0.3)}, ${ease});
+        })();`;
+    case "glitchIn":
+      return `
+        (function () {
+          MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur, 0.25)}, ${ease});
+          var fx = ly.property("ADBE Effect Parade");
+          try {
+            var pt = fx.addProperty("ADBE Posterize Time"); pt.property(1).setValue(16);
+          } catch (ept) {}
+          var pos = ly.property("ADBE Transform Group").property("ADBE Position");
+          try {
+            pos.expression = "seedRandom(index,true); var g=(time<" + (${t0} + ${dur}) + ")?1:0; var on=Math.random()>0.6?1:0; [value[0]+random(-26,26)*g*on, value[1]+random(-6,6)*g*on];";
+          } catch (e) {}
+        })();`;
+    case "neonFlicker":
+      return `
+        (function () {
+          try {
+            var glow = ly.property("ADBE Effect Parade").addProperty("ADBE Glow");
+            glow.property("ADBE Glow-0003").setValue(${a.strength ?? 30});
+            glow.property("ADBE Glow-0004").setValue(1.8);
+          } catch (eg) {}
+          var op = ly.property("ADBE Transform Group").property("ADBE Opacity");
+          try { op.expression = "seedRandom(Math.floor(time*16),true); random(0,1)>0.1 ? 100 : 40;"; } catch (e) {}
+        })();`;
+    case "chromaSplit":
+      return `
+        (function () {
+          try {
+            var off = ly.property("ADBE Effect Parade").addProperty("ADBE Channel Offset") ||
+                      ly.property("ADBE Effect Parade").addProperty("ADBE Offset");
+          } catch (e) {}
+          var pos = ly.property("ADBE Transform Group").property("ADBE Position");
+          try { pos.expression = "var a=" + (${a.strength ?? 5}) + "; [value[0]+Math.sin(time*9)*a, value[1]];"; } catch (e2) {}
+          MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur, 0.4)}, ${ease});
+        })();`;
+    case "flip3D":
+      return `
+        (function () {
+          try { ly.threeDLayer = true; } catch (e3) {}
+          var ry = ly.property("ADBE Transform Group").property("ADBE Rotate Y");
+          ry.setValueAtTime(${t0}, ${a.strength ?? 90});
+          ry.setValueAtTime(${t0 + dur}, 0);
+          MP.setEase(ry, ${ease});
+          MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur, 0.4)}, ${ease});
+        })();`;
+    case "energyTrail":
+      return `
+        (function () {
+          try {
+            var ec = ly.property("ADBE Effect Parade").addProperty("ADBE Echo");
+            ec.property("ADBE Echo-0001").setValue(-0.03);
+            ec.property("ADBE Echo-0002").setValue(${a.strength ?? 6});
+            ec.property("ADBE Echo-0004").setValue(0.7);
+          } catch (e) {}
+          MP.addPositionAnimation(ly, [0, ${a.strength ?? -40}], ${t0}, ${dur}, ${ease});
+        })();`;
+    case "motionStreak":
+      return `
+        (function () {
+          try {
+            var db = ly.property("ADBE Effect Parade").addProperty("ADBE Motion Blur");
+            var len = db.property("ADBE Motion Blur-0002");
+            if (len) { len.setValueAtTime(${t0}, ${a.strength ?? 180}); len.setValueAtTime(${t0 + dur}, 0); }
+          } catch (e) {}
+          MP.addPositionAnimation(ly, [${a.strength ?? 200}, 0], ${t0}, ${dur}, ${ease});
+          MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur, 0.3)}, ${ease});
+        })();`;
+    case "kineticBounce":
+      return `
+        MP.addScaleAnimation(ly, 0, 118, ${t0}, ${dur * 0.55}, "backOut");
+        MP.addScaleAnimation(ly, 118, 100, ${t0 + dur * 0.55}, ${dur * 0.45}, "quadOut");
+        MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${Math.min(dur, 0.18)}, ${ease});`;
     default:
       return `MP.addOpacityAnimation(ly, 0, 100, ${t0}, ${dur}, ${ease});`;
   }
@@ -416,11 +497,38 @@ export function generateRenderJsx(opts: {
 
     var rqItem = app.project.renderQueue.items.add(comp);
     var om = rqItem.outputModule(1);
-    try {
-      om.applyTemplate("H.264 - Match Render Settings -  15 Mbps");
-    } catch (e) {
-      MP.log("H.264 template not found, using default Lossless: " + e.toString());
-    }
+    // Try to find a real H.264 output-module template on THIS machine instead of
+    // hard-coding one name (template names vary across AE versions/locales).
+    (function () {
+      var preferred = [
+        "H.264 - Match Render Settings -  15 Mbps",
+        "H.264 - Match Render Settings - 15 Mbps",
+        "H.264 - Match Render Settings - 40 Mbps",
+        "H.264 - Match Render Settings - 5 Mbps",
+        "H.264",
+        "High Quality with Alpha",
+        "High Quality"
+      ];
+      var available = [];
+      try { available = om.templates; } catch (eT) {}
+      // 1) exact preferred match
+      for (var i = 0; i < preferred.length; i++) {
+        for (var j = 0; j < available.length; j++) {
+          if (available[j] === preferred[i]) {
+            try { om.applyTemplate(available[j]); MP.log("Render template: " + available[j]); return; }
+            catch (eA) {}
+          }
+        }
+      }
+      // 2) any template whose name contains "H.264" / "H264"
+      for (var k = 0; k < available.length; k++) {
+        if (/h\.?264/i.test(available[k])) {
+          try { om.applyTemplate(available[k]); MP.log("Render template (fuzzy H.264): " + available[k]); return; }
+          catch (eF) {}
+        }
+      }
+      MP.log("No H.264 template found; using output module default. Available: " + available.join(" | "));
+    })();
     om.file = new File(${jstr(opts.outputVideoPath)});
     app.project.renderQueue.render();
     __result.output = ${jstr(opts.outputVideoPath)};
@@ -706,7 +814,7 @@ export function generateExecuteActionsJsx(opts: {
     }
     app.endUndoGroup();
 
-    __result.log = MP.getLog() + "\\nMP_ACTION_SUMMARY_BEGIN\\n" + JSON.stringify(SUMMARY) + "\\nMP_ACTION_SUMMARY_END";
+    __result.log = MP.getLog() + "\\nMP_ACTION_SUMMARY_BEGIN\\n" + MP.toJson(SUMMARY) + "\\nMP_ACTION_SUMMARY_END";
     if (changed) {
       if (!${opts.outputAepPath ? "true" : "false"}) throw new Error("outputAepPath is required for mutating actions.");
       __result.output = MP.saveProject(${opts.outputAepPath ? jstr(opts.outputAepPath) : '""'});

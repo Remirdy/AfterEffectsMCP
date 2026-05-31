@@ -47,6 +47,7 @@ motion. No text rewriting.
 Minimal luxury portfolio motion. Slow elegant fades, restrained parallax, no
 excessive effects, subtle glow only on the logo, refined commercial timing.
 ```
+
    → returns `analysisJsonPath` + preview/thumbnail paths for visual inspection.
 
 2. `create_motion_plan_from_analysis`
@@ -59,6 +60,7 @@ excessive effects, subtle glow only on the logo, refined commercial timing.
      "style": "premium"
    }
    ```
+
    → returns `motionPlanJsonPath`.
 
 3. `import_psd_to_after_effects`
@@ -96,3 +98,32 @@ excessive effects, subtle glow only on the logo, refined commercial timing.
      "approveOverwrite": true
    }
    ```
+
+## Prompt-to-game VFX
+
+Create a standalone game VFX element from a natural-language prompt:
+
+```json
+{
+  "prompt": "devasa mor portal açılışı, lightning arcs, shockwave, horizontal",
+  "outputAepPath": "/Users/me/vfx/purple_portal.aep",
+  "outputPlanJsonPath": "/Users/me/vfx/purple_portal_plan.json",
+  "duration": 5,
+  "fps": 30,
+  "approveOverwrite": true
+}
+```
+
+Apply prompt-generated VFX to an existing comp:
+
+```json
+{
+  "prompt": "mavi elektrikli kalkan darbesi, küçük kıvılcımlar",
+  "aepPath": "/Users/me/game_scene/game_scene.aep",
+  "outputAepPath": "/Users/me/game_scene/game_scene_vfx.aep",
+  "compName": "Main",
+  "targetLayer": "Hero_",
+  "position": [960, 540],
+  "approveOverwrite": true
+}
+```

@@ -251,6 +251,37 @@ var MP = (function () {
     return f.fsName;
   }
 
+  function quoteJsonString(s) {
+    return '"' + String(s)
+      .replace(/\\/g, "\\\\")
+      .replace(/"/g, '\\"')
+      .replace(/\r/g, "\\r")
+      .replace(/\n/g, "\\n")
+      .replace(/\t/g, "\\t") + '"';
+  }
+
+  function toJson(value) {
+    if (value === null) return "null";
+    var t = typeof value;
+    if (t === "string") return quoteJsonString(value);
+    if (t === "number" || t === "boolean") return String(value);
+    if (value instanceof Array) {
+      var arr = [];
+      for (var i = 0; i < value.length; i++) arr.push(toJson(value[i]));
+      return "[" + arr.join(",") + "]";
+    }
+    if (t === "object") {
+      var parts = [];
+      for (var k in value) {
+        if (value.hasOwnProperty(k) && typeof value[k] !== "undefined") {
+          parts.push(quoteJsonString(k) + ":" + toJson(value[k]));
+        }
+      }
+      return "{" + parts.join(",") + "}";
+    }
+    return "null";
+  }
+
   return {
     log: log, getLog: function () { return LOG.join("\n"); },
     setEase: setEase,
@@ -269,6 +300,7 @@ var MP = (function () {
     addCameraPush: addCameraPush,
     protectTextLayer: protectTextLayer,
     saveProject: saveProject,
+    toJson: toJson,
     getPos: getPos
   };
 })();

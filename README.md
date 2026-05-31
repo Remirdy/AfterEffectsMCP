@@ -65,6 +65,57 @@ run by the AE binary (`aerender` for headless rendering when available).
 | `render_preview` | Render a comp to `.mp4`/`.mov` via `aerender` (or the AE render queue) and return logs + path. |
 | `check_after_effects_setup` | Validate local `AE_BINARY` / `AERENDER_BINARY` resolution without launching After Effects. Good first smoke test after install. |
 | `execute_after_effects_actions` | General AE control: create/list compositions, read project info, create text/shape/solid/adjustment/camera/null layers, edit layer properties/timing, toggle 2D/3D, set blend modes and track mattes, duplicate/delete layers, create masks, set keyframes, apply expressions, and batch-set properties. |
+| `list_vfx_presets` | List the professional VFX preset library across **game**, **cinema** and **social** domains. Each preset is hybrid: it uses premium plugins (Trapcode Particular, Video Copilot Saber, Optical Flares) when installed and falls back to stock After Effects effects otherwise. |
+| `apply_vfx` | Apply one or more VFX presets to an existing `.aep` comp and save a new copy. Comp-mode presets spawn their own layers (bursts, shockwaves, fire, fog, light rays); layer-mode presets decorate a `targetLayer` (neon glow, power aura, kinetic pop, glitch). Never modifies source text. |
+| `create_vfx_composition` | Create a brand-new project with a standalone, reusable VFX element comp (explosion, magic circle, fog plate, fire column, laser beam) for compositing into other projects. |
+| `build_complex_vfx` | Build DETAILED, production-grade **composite** VFX in one call. Each recipe stacks many layers/effects into a single professional result with an `intensity` control: `cinematicExplosion`, `magicCast`, `heroEntrance`, `celebration`, `powerSurge`, `stormScene`. Works on an existing AEP or spins up a fresh comp. |
+| `create_game_vfx_from_prompt` | Create game-ready VFX directly from an English/Turkish prompt. Infers effect type, color, intensity and format, then creates a standalone VFX `.aep` or applies the result to an existing project. |
+
+### Professional VFX engine (game / cinema / social)
+
+MotionPilot now ships a hybrid VFX engine. Discover effects with `list_vfx_presets`, then apply them with `apply_vfx`.
+
+- **Game VFX** — `game.energy_burst` (radial particle explosion), `game.shockwave` (expanding distortion ring), `game.magic_circle` (rotating arcane sigil), `game.power_aura` (pulsing glow + rising embers on a hero layer), `game.hit_spark` (directional impact spark).
+- **Cinema VFX** — `cinema.atmospheric_fog`, `cinema.light_rays` (volumetric god-rays), `cinema.lens_flare` (animated anamorphic flare), `cinema.fire` / `cinema.smoke` (procedural fractal-noise + turbulent-displace columns), `cinema.energy_beam` (Saber-or-stroke laser), `cinema.film_grain`, `cinema.color_grade` (grade + feathered vignette).
+- **Social VFX** — `social.glitch` (RGB-split / block displacement hit), `social.rgb_split` (chromatic aberration), `social.neon_glow` (layered glow + flicker), `social.whip_pan` (fast directional-blur cut), `social.kinetic_pop` (scale-overshoot sticker pop).
+
+**Advanced primitives** add deeper, multi-layer effects: `game.lightning_bolt` (branching arcs), `game.portal` (polar vortex), `game.force_field` (fresnel shield dome), `game.disintegrate` (Thanos-style dissolve), `game.sword_slash`, `game.speed_lines`, `game.charge_up`, `game.muzzle_flash`, `cinema.hologram`, `cinema.rain_storm`, `cinema.snow_fall`, `cinema.water_ripple`, `cinema.light_leak`, `ad.plexus_network`, `ad.bokeh`, `social.confetti`.
+
+**Composite recipes** (via `build_complex_vfx`) stack these into one production-grade effect: `cinematicExplosion`, `magicCast`, `heroEntrance`, `celebration`, `powerSurge`, `stormScene` — each with an `intensity` (0.2–3) that scales the entire stack.
+
+**Hybrid behavior:** each effect probes for its premium plugin first (e.g. `Trapcode Particular` for bursts, `ADBE Saber` for beams, `Optical Flares` for flares, `CC Rainfall`/`CC Snowfall` for weather, `Trapcode Form` for plexus) and silently falls back to a stock-AE build so scripts run on any clean install.
+
+### Prompt-to-game VFX
+
+Use `create_game_vfx_from_prompt` when you want to type a VFX idea instead of manually picking presets. It understands English and Turkish cues such as `patlama`, `ateş`, `şimşek`, `kalkan`, `portal`, `büyü çemberi`, `enerji patlaması`, `sword slash`, `muzzle flash`, `shockwave`, and color/intensity words like `mavi`, `mor`, `devasa`, `hafif`.
+
+Standalone VFX element:
+
+```json
+{
+  "prompt": "devasa mavi büyü patlaması, shockwave ve kıvılcımlar, horizontal",
+  "outputAepPath": "/Users/me/vfx/blue_magic_blast.aep",
+  "duration": 5,
+  "fps": 30,
+  "approveOverwrite": true
+}
+```
+
+Apply prompt-generated VFX to an existing project:
+
+```json
+{
+  "prompt": "elektrikli kalkan darbesi, cyan, yoğun",
+  "aepPath": "/Users/me/game_scene/game_scene.aep",
+  "outputAepPath": "/Users/me/game_scene/game_scene_shield_vfx.aep",
+  "compName": "Main",
+  "targetLayer": "Hero_",
+  "position": [960, 540],
+  "approveOverwrite": true
+}
+```
+
+The motion planner also gained VFX-grade animation types usable in motion plans: `elasticScale`, `glitchIn`, `neonFlicker`, `chromaSplit`, `flip3D`, `energyTrail`, `motionStreak`, `kineticBounce`.
 
 ### Direction-driven professional motion
 
