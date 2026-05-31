@@ -105,7 +105,7 @@ Create a standalone game VFX element from a natural-language prompt:
 
 ```json
 {
-  "prompt": "devasa mor portal açılışı, lightning arcs, shockwave, horizontal",
+  "prompt": "massive purple portal opening, lightning arcs, shockwave, horizontal",
   "outputAepPath": "/Users/me/vfx/purple_portal.aep",
   "outputPlanJsonPath": "/Users/me/vfx/purple_portal_plan.json",
   "duration": 5,
@@ -118,7 +118,7 @@ Apply prompt-generated VFX to an existing comp:
 
 ```json
 {
-  "prompt": "mavi elektrikli kalkan darbesi, küçük kıvılcımlar",
+  "prompt": "blue electric shield impact with small sparks",
   "aepPath": "/Users/me/game_scene/game_scene.aep",
   "outputAepPath": "/Users/me/game_scene/game_scene_vfx.aep",
   "compName": "Main",

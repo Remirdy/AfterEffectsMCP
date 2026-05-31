@@ -60,6 +60,7 @@ run by the AE binary (`aerender` for headless rendering when available).
 | `create_video_prompt_package` | Turn a prompt and optional reference URL into a production-ready video package: creative brief, beat/shot list, AI-video prompts, and After Effects motion direction. |
 | `create_image_asset_pack` | Generate procedural PNG assets from a prompt: background, hero object, connection rings, kinetic streaks, title plate, and CTA plate. |
 | `create_3d_scene_from_assets` | Build a 3D/2.5D After Effects project from generated assets with camera, light, Z-depth, parallax, and orbital motion. |
+| `build_procedural_commercial` | Build a complete asset-free commercial directly in After Effects with editable text/wordmark, shape-layer logo icon, gradients, glass UI, feature cards, particles, trim paths, camera parallax, markers, finishing layers and render-queue setup. Best for fictional brands and product-launch ads with no existing assets. |
 | `import_psd_to_after_effects` | Open AE, import the PSD as a composition retaining layer sizes, set duration/FPS, save a new `.aep`. |
 | `animate_after_effects_project` | Apply the motion plan as keyframes + easing (position, scale, opacity, rotation, blur, masks, parallax, stagger, light sweep) and save a new animated `.aep`. |
 | `render_preview` | Render a comp to `.mp4`/`.mov` via `aerender` (or the AE render queue) and return logs + path. |
@@ -69,9 +70,35 @@ run by the AE binary (`aerender` for headless rendering when available).
 | `apply_vfx` | Apply one or more VFX presets to an existing `.aep` comp and save a new copy. Comp-mode presets spawn their own layers (bursts, shockwaves, fire, fog, light rays); layer-mode presets decorate a `targetLayer` (neon glow, power aura, kinetic pop, glitch). Never modifies source text. |
 | `create_vfx_composition` | Create a brand-new project with a standalone, reusable VFX element comp (explosion, magic circle, fog plate, fire column, laser beam) for compositing into other projects. |
 | `build_complex_vfx` | Build DETAILED, production-grade **composite** VFX in one call. Each recipe stacks many layers/effects into a single professional result with an `intensity` control: `cinematicExplosion`, `magicCast`, `heroEntrance`, `celebration`, `powerSurge`, `stormScene`. Works on an existing AEP or spins up a fresh comp. |
-| `create_game_vfx_from_prompt` | Create game-ready VFX directly from an English/Turkish prompt. Infers effect type, color, intensity and format, then creates a standalone VFX `.aep` or applies the result to an existing project. |
+| `create_game_vfx_from_prompt` | Create game-ready VFX directly from a natural-language prompt. Infers effect type, color, intensity and format, then creates a standalone VFX `.aep` or applies the result to an existing project. |
 | `create_game_engine_vfx_package` | Create a Unity/Unreal-ready VFX package from a prompt: editable source `.aep`, manifest, sprite-sheet / PNG-sequence render targets, Unity import notes, Unreal/Niagara notes, and optional C4D/Cineware scene import when requested. |
 | `create_raster_vfx_plate` | Create high-quality raster/noise/particle-field PNG frame sequences for professional VFX plates. This is the preferred quality path for fire, portals, magic energy, shockwaves, sparks and other detailed game VFX. |
+
+### Asset-free commercial builder
+
+Use `build_procedural_commercial` when the brief says there are no existing
+assets and the whole ad should be generated inside After Effects. It creates a
+structured vertical commercial from editable AE layers only: text layers,
+shape-layer logo/icon systems, gradients, glass panels, feature cards, prompt
+interface graphics, particles, trim-path lines, camera/null parallax, markers,
+color grade, grain and vignette.
+
+```json
+{
+  "prompt": "Premium launch ad for an AI motion-design tool",
+  "brandName": "Remirdy",
+  "headline": "AI Motion Design Control",
+  "features": ["Animate faster.", "Build cleaner.", "Create smarter."],
+  "promptLine": "Control After Effects with prompts.",
+  "tagline": "From idea to motion.",
+  "outputAepPath": "/Users/me/ads/remirdy_launch.aep",
+  "width": 1080,
+  "height": 1920,
+  "duration": 12,
+  "fps": 30,
+  "approveOverwrite": true
+}
+```
 
 ### Professional VFX engine (game / cinema / social)
 
@@ -89,13 +116,13 @@ MotionPilot now ships a hybrid VFX engine. Discover effects with `list_vfx_prese
 
 ### Prompt-to-game VFX
 
-Use `create_game_vfx_from_prompt` when you want to type a VFX idea instead of manually picking presets. It understands English and Turkish cues such as `patlama`, `ateş`, `şimşek`, `kalkan`, `portal`, `büyü çemberi`, `enerji patlaması`, `sword slash`, `muzzle flash`, `shockwave`, and color/intensity words like `mavi`, `mor`, `devasa`, `hafif`.
+Use `create_game_vfx_from_prompt` when you want to type a VFX idea instead of manually picking presets. It understands common effect cues such as `explosion`, `fire`, `lightning`, `shield`, `portal`, `magic circle`, `energy burst`, `sword slash`, `muzzle flash`, `shockwave`, and color/intensity words like `blue`, `purple`, `massive`, `subtle`.
 
 Standalone VFX element:
 
 ```json
 {
-  "prompt": "devasa mavi büyü patlaması, shockwave ve kıvılcımlar, horizontal",
+  "prompt": "massive blue magic explosion with shockwave and sparks, horizontal",
   "outputAepPath": "/Users/me/vfx/blue_magic_blast.aep",
   "duration": 5,
   "fps": 30,
@@ -107,7 +134,7 @@ Apply prompt-generated VFX to an existing project:
 
 ```json
 {
-  "prompt": "elektrikli kalkan darbesi, cyan, yoğun",
+  "prompt": "intense cyan electric shield impact",
   "aepPath": "/Users/me/game_scene/game_scene.aep",
   "outputAepPath": "/Users/me/game_scene/game_scene_shield_vfx.aep",
   "compName": "Main",

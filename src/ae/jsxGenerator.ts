@@ -1,5 +1,6 @@
 import { MotionPlan, MotionAnimation, Direction } from "../types.js";
 import { JSX_HELPERS } from "./jsxHelpers.js";
+import { VFX_HELPERS } from "./vfxHelpers.js";
 
 function jstr(s: string): string {
   return JSON.stringify(String(s));
@@ -61,6 +62,20 @@ ${body}
 })();
 `;
 }
+
+/** Same as withReport but also makes the MPVFX library available (for the
+ * cinematic finishing pass on the 3D scene). */
+function withReportVfx(body: string): string {
+  return VFX_HELPERS + "\n" + withReport(body);
+}
+
+/** Public wrapper so other generators (e.g. the commercial builder) can emit a
+ * full runnable script with MP + MPVFX helpers and the standard result markers. */
+export function wrapScriptWithVfx(body: string): string {
+  return withReportVfx(body);
+}
+
+export { jstr as jsxStr, jsonLiteral as jsxJsonLiteral };
 
 /**
  * JSX to import a PSD as a composition (retaining layer sizes), set comp
@@ -834,6 +849,8 @@ export function generateCreate3dSceneJsx(opts: {
       z: number;
       scale: number;
       position: [number, number];
+      blend?: "normal" | "add" | "screen" | "multiply";
+      motion?: string;
     }>;
   };
   outputAepPath: string;
@@ -865,14 +882,43 @@ export function generateCreate3dSceneJsx(opts: {
       ly.name = a.name;
       ly.threeDLayer = true;
       ly.property("ADBE Transform Group").property("ADBE Position").setValue([a.position[0], a.position[1], a.z]);
-      ly.property("ADBE Transform Group").property("ADBE Scale").setValue([a.scale, a.scale, a.scale]);
+      // Z-compensated scale: a perspective camera shrinks far (high-z) layers,
+      // so compensate by depth so every plate fills the frame. camDist=1350,
+      // zoom=980 (matching the camera below). a.scale acts as an art-direction
+      // multiplier (e.g. 88 = frame the hero slightly inside the edges).
+      var sFill = a.scale * (a.z + 1350) / 980;
+      ly.property("ADBE Transform Group").property("ADBE Scale").setValue([sFill, sFill, sFill]);
       try { ly.motionBlur = true; } catch (e) {}
+      // Apply authored blend mode for additive light / screen atmosphere plates.
+      try {
+        if (a.blend === "add") ly.blendingMode = BlendingMode.ADD;
+        else if (a.blend === "screen") ly.blendingMode = BlendingMode.SCREEN;
+        else if (a.blend === "multiply") ly.blendingMode = BlendingMode.MULTIPLY;
+      } catch (eBlend) {}
       layers.push(ly);
 
       if (a.role === "background") {
         MP.addParallax(ly, 28, 0, ${opts.duration}, "sineInOut");
+      } else if (a.role === "atmosphere") {
+        // Slow living haze: gentle drift + breathing scale.
+        ly.property("ADBE Transform Group").property("ADBE Position").expression =
+          "[value[0]+Math.sin(time*.18)*36, value[1]+Math.cos(time*.13)*22, value[2]];";
+        ly.property("ADBE Transform Group").property("ADBE Scale").expression =
+          "var s=Math.sin(time*.22)*2.5; [value[0]+s,value[1]+s,value[2]];";
+      } else if (a.role === "light") {
+        // Volumetric light: subtle intensity pulse + slow sway.
+        ly.property("ADBE Transform Group").property("ADBE Opacity").expression =
+          "60 + Math.sin(time*.6)*18;";
+        ly.property("ADBE Transform Group").property("ADBE Rotate Z").expression = "Math.sin(time*.2)*3;";
+      } else if (a.role === "foreground") {
+        // Near defocus plate: stronger parallax than background.
+        MP.addParallax(ly, 60, 0, ${opts.duration}, "sineInOut");
+      } else if (a.role === "grain") {
+        // Grain stays locked to frame (no parallax), low opacity texture.
+        ly.threeDLayer = false;
+        try { ly.property("ADBE Transform Group").property("ADBE Opacity").setValue(42); } catch (eG) {}
       } else if (a.role === "hero") {
-        MP.addScaleAnimation(ly, 84, a.scale, 0.45, 1.4, "backOut");
+        MP.addScaleAnimation(ly, sFill * 0.9, sFill, 0.45, 1.4, "backOut");
         MP.addPositionAnimation(ly, [0, 72], 0.45, 1.4, "backOut");
         ly.property("ADBE Transform Group").property("ADBE Rotate Y").expression = "Math.sin(time*.55)*5;";
       } else if (a.role === "accent") {
@@ -902,8 +948,31 @@ export function generateCreate3dSceneJsx(opts: {
     light.property("ADBE Transform Group").property("ADBE Position").setValue([MANIFEST.width * 0.2, MANIFEST.height * 0.2, -500]);
 
     try { comp.motionBlur = true; } catch (e) {}
+
+    // ---- Cinematic finishing pass: turn the flat parallax into a finished
+    //      shot. Real post-VFX (bloom, sweep, grade+vignette, grain) via MPVFX,
+    //      so the result reads as a focused, graded hero shot — not a blurry
+    //      gradient. Each step is guarded so a clean AE install never breaks.
+    try {
+      MPVFX.run(comp, "enableMotionBlur", {});
+      // Emissive bloom so the hero + glowing accents actually read as a subject.
+      MPVFX.run(comp, "premiumGlow", { targetLayer: "hero_element", strength: 150 });
+      MPVFX.run(comp, "premiumGlow", { targetLayer: "glow_core", strength: 120 });
+      MPVFX.run(comp, "premiumGlow", { targetLayer: "accent_rings", strength: 70 });
+      MPVFX.run(comp, "premiumGlow", { targetLayer: "network", strength: 50 });
+      // Hero shine sweep for premium product feel.
+      MPVFX.run(comp, "lightSweep", { targetLayer: "hero_element", start: 1.3, duration: 1.8 });
+      // Cinematic grade + vignette focuses the eye to the center subject.
+      MPVFX.run(comp, "cinematicGrade", {});
+      // Fine filmic grain on top.
+      MPVFX.run(comp, "filmGrain", { strength: 6 });
+      MP.log("3D scene cinematic finishing pass applied");
+    } catch (eVfx) {
+      MP.log("finishing pass error: " + eVfx.toString());
+    }
+
     app.endUndoGroup();
     __result.output = MP.saveProject(${jstr(opts.outputAepPath)});
   `;
-  return withReport(body);
+  return withReportVfx(body);
 }
