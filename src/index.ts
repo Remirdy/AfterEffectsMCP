@@ -21,12 +21,14 @@ import {
   buildComplexVfxSchema,
   createGameVfxFromPromptSchema,
   createGameEngineVfxPackageSchema,
+  createRasterVfxPlateSchema,
   ListVfxPresetsInput,
   ApplyVfxInput,
   CreateVfxCompositionInput,
   BuildComplexVfxInput,
   CreateGameVfxFromPromptInput,
   CreateGameEngineVfxPackageInput,
+  CreateRasterVfxPlateInput,
   AnalyzePsdInput,
   CreateMotionPlanInput,
   CreateVideoPromptPackageInput,
@@ -53,6 +55,7 @@ import { generateApplyVfxJsx, generateCreateVfxCompJsx, generateComplexVfxJsx, g
 import { listVfxPresets, listVfxComposites, VfxDomain } from "./vfx/presets.js";
 import { buildVfxPlanFromPrompt } from "./vfx/vfxPlanner.js";
 import { writeEnginePackage, inferC4dRequested } from "./engine/package.js";
+import { generateRasterVfxPlate } from "./vfx/rasterPlate.js";
 import { resolveAerender, resolveAfterEffects, runJsx, runAerender } from "./ae/runner.js";
 import {
   OpLog,
@@ -835,6 +838,37 @@ server.tool(
       });
     } catch (e) {
       return errorResult(`create_game_engine_vfx_package failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 17: create_raster_vfx_plate
+ * ------------------------------------------------------------------ */
+server.tool(
+  "create_raster_vfx_plate",
+  "Create a high-quality raster/noise/particle-field VFX plate as PNG frames. " +
+    "This is the preferred quality path for professional game VFX such as fire, portals, " +
+    "magic energy, shockwaves and spark-heavy effects. It avoids geometric-looking AE shape " +
+    "fallbacks and produces engine/AE-friendly image sequences.",
+  createRasterVfxPlateSchema,
+  async (args: CreateRasterVfxPlateInput) => {
+    const log = new OpLog();
+    try {
+      await guardOverwrite(path.join(args.outputFolder, "raster-vfx-manifest.json"), args.approveOverwrite);
+      const result = await generateRasterVfxPlate({
+        prompt: args.prompt,
+        outputFolder: args.outputFolder,
+        kind: args.kind,
+        width: args.width,
+        height: args.height,
+        frames: args.frames,
+        fps: args.fps,
+      });
+      log.info(`Generated raster VFX plate frames: ${result.framesFolder}`);
+      return textResult({ ok: true, ...result, log: log.all });
+    } catch (e) {
+      return errorResult(`create_raster_vfx_plate failed: ${(e as Error).message}`, log);
     }
   }
 );

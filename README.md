@@ -71,6 +71,7 @@ run by the AE binary (`aerender` for headless rendering when available).
 | `build_complex_vfx` | Build DETAILED, production-grade **composite** VFX in one call. Each recipe stacks many layers/effects into a single professional result with an `intensity` control: `cinematicExplosion`, `magicCast`, `heroEntrance`, `celebration`, `powerSurge`, `stormScene`. Works on an existing AEP or spins up a fresh comp. |
 | `create_game_vfx_from_prompt` | Create game-ready VFX directly from an English/Turkish prompt. Infers effect type, color, intensity and format, then creates a standalone VFX `.aep` or applies the result to an existing project. |
 | `create_game_engine_vfx_package` | Create a Unity/Unreal-ready VFX package from a prompt: editable source `.aep`, manifest, sprite-sheet / PNG-sequence render targets, Unity import notes, Unreal/Niagara notes, and optional C4D/Cineware scene import when requested. |
+| `create_raster_vfx_plate` | Create high-quality raster/noise/particle-field PNG frame sequences for professional VFX plates. This is the preferred quality path for fire, portals, magic energy, shockwaves, sparks and other detailed game VFX. |
 
 ### Professional VFX engine (game / cinema / social)
 
@@ -165,6 +166,27 @@ provide a `.c4d` scene:
 When C4D is requested, MotionPilot attempts to import the `.c4d` scene into the
 AE source comp through the local After Effects/Cineware path. If no C4D scene is
 provided, it still creates an AE-only package unless `c4dMode` is `require`.
+
+### Professional raster VFX quality bar
+
+For detailed game VFX, MotionPilot should prefer raster/noise/particle-field
+plates over geometric-looking AE shape fallbacks. Fire, portals, magic energy,
+shockwaves and spark-heavy effects should be generated as organic PNG frame
+sequences that can be imported into After Effects, Unity or Unreal.
+
+Example prompt:
+
+```text
+Create fire
+```
+
+Example output quality target:
+
+![Professional fire VFX example](./assets/pro-fire-example.gif)
+
+Use `create_raster_vfx_plate` directly when you want a high-quality image
+sequence, or use engine package tools when you need Unity/Unreal import
+metadata around the same kind of plate.
 
 The motion planner also gained VFX-grade animation types usable in motion plans: `elasticScale`, `glitchIn`, `neonFlicker`, `chromaSplit`, `flip3D`, `energyTrail`, `motionStreak`, `kineticBounce`.
 

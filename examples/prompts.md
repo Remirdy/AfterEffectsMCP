@@ -149,6 +149,30 @@ sprite sheets or flipbooks:
 }
 ```
 
+## Professional raster VFX plate
+
+Use this when the VFX needs to look organic and detailed instead of geometric.
+Example prompt:
+
+```text
+Create fire
+```
+
+Tool call:
+
+```json
+{
+  "prompt": "Create fire",
+  "outputFolder": "/Users/me/vfx/create_fire_plate",
+  "kind": "auto",
+  "width": 1280,
+  "height": 720,
+  "frames": 120,
+  "fps": 30,
+  "approveOverwrite": true
+}
+```
+
 Create an Unreal/Niagara package with optional C4D/Cineware support when the
 user explicitly asks for it:
 

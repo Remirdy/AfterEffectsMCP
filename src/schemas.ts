@@ -270,6 +270,20 @@ export const createGameEngineVfxPackageSchema = {
     .describe("Must be true when outputFolder already contains a manifest/source AEP that would be replaced."),
 };
 
+export const createRasterVfxPlateSchema = {
+  prompt: z
+    .string()
+    .min(3)
+    .describe("Natural-language VFX prompt. Example: 'Create fire', 'blue portal', 'magic shockwave'."),
+  outputFolder: z.string().describe("Folder where PNG frames and raster-vfx-manifest.json are written."),
+  kind: z.enum(["auto", "fire", "energy", "portal", "shockwave", "magic", "sparks"]).default("auto"),
+  width: z.number().int().positive().default(1280),
+  height: z.number().int().positive().default(720),
+  frames: z.number().int().positive().default(120),
+  fps: z.number().positive().default(30),
+  approveOverwrite: z.boolean().default(false).describe("Must be true when outputFolder already contains raster-vfx-manifest.json."),
+};
+
 export const applyVfxSchema = {
   aepPath: z.string().describe("Path to the .aep project the VFX should be applied to."),
   outputAepPath: z.string().describe("Path of the new .aep to save with the VFX applied (a new copy)."),
@@ -396,4 +410,7 @@ export type CreateGameVfxFromPromptInput = {
 };
 export type CreateGameEngineVfxPackageInput = {
   [K in keyof typeof createGameEngineVfxPackageSchema]: z.infer<(typeof createGameEngineVfxPackageSchema)[K]>;
+};
+export type CreateRasterVfxPlateInput = {
+  [K in keyof typeof createRasterVfxPlateSchema]: z.infer<(typeof createRasterVfxPlateSchema)[K]>;
 };
