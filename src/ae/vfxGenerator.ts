@@ -267,7 +267,28 @@ export function generatePromptVfxJsx(opts: {
   compName?: string;
   outputAepPath: string;
   plan: VfxPlan;
+  c4dScenePath?: string;
 }): string {
+  const c4dImport = opts.c4dScenePath
+    ? `
+    (function () {
+      var c4dFile = new File(${jstr(opts.c4dScenePath)});
+      if (!c4dFile.exists) { throw new Error("C4D scene not found: " + ${jstr(opts.c4dScenePath)}); }
+      try {
+        var io = new ImportOptions(c4dFile);
+        var c4dItem = app.project.importFile(io);
+        var c4dLayer = comp.layers.add(c4dItem);
+        c4dLayer.name = "C4D/Cineware Scene";
+        c4dLayer.startTime = 0;
+        c4dLayer.outPoint = comp.duration;
+        try { c4dLayer.threeDLayer = true; } catch (e3d) {}
+        MP.log("Imported C4D scene via AE/Cineware path: " + ${jstr(opts.c4dScenePath)});
+      } catch (eC4D) {
+        throw new Error("C4D/Cineware import failed: " + eC4D.toString());
+      }
+    })();`
+    : "";
+
   const compSetup = opts.aepPath
     ? `
     var proj = new File(${jstr(opts.aepPath)});
@@ -294,6 +315,7 @@ export function generatePromptVfxJsx(opts: {
     app.beginUndoGroup("MotionPilot Prompt Game VFX");
     ${compSetup}
     MP.log("Prompt VFX target comp: " + comp.name);
+    ${c4dImport}
 
     var STEPS = ${jsonLiteral(opts.plan.steps)};
     var applied = [];

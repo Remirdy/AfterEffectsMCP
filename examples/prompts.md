@@ -127,3 +127,41 @@ Apply prompt-generated VFX to an existing comp:
   "approveOverwrite": true
 }
 ```
+
+## Unity / Unreal VFX package
+
+Create a Unity-ready package when the user asks for VFX Graph, URP/HDRP,
+sprite sheets or flipbooks:
+
+```json
+{
+  "prompt": "looping cyan shield impact for Unity VFX Graph, additive flipbook",
+  "outputFolder": "/Users/me/vfx/cyan_shield_unity",
+  "engine": "auto",
+  "exportKind": "both",
+  "frameWidth": 1024,
+  "frameHeight": 1024,
+  "duration": 2,
+  "fps": 30,
+  "loop": true,
+  "blendMode": "additive",
+  "approveOverwrite": true
+}
+```
+
+Create an Unreal/Niagara package with optional C4D/Cineware support when the
+user explicitly asks for it:
+
+```json
+{
+  "prompt": "Unreal Niagara lava portal, use Cinema 4D geometry if available, AE glow compositing",
+  "outputFolder": "/Users/me/vfx/lava_portal_unreal",
+  "engine": "unreal",
+  "exportKind": "pngSequence",
+  "c4dMode": "use",
+  "c4dScenePath": "/Users/me/scenes/lava_portal.c4d",
+  "duration": 2.5,
+  "fps": 30,
+  "approveOverwrite": true
+}
+```

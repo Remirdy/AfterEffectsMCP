@@ -20,11 +20,13 @@ import {
   createVfxCompositionSchema,
   buildComplexVfxSchema,
   createGameVfxFromPromptSchema,
+  createGameEngineVfxPackageSchema,
   ListVfxPresetsInput,
   ApplyVfxInput,
   CreateVfxCompositionInput,
   BuildComplexVfxInput,
   CreateGameVfxFromPromptInput,
+  CreateGameEngineVfxPackageInput,
   AnalyzePsdInput,
   CreateMotionPlanInput,
   CreateVideoPromptPackageInput,
@@ -50,6 +52,7 @@ import {
 import { generateApplyVfxJsx, generateCreateVfxCompJsx, generateComplexVfxJsx, generatePromptVfxJsx } from "./ae/vfxGenerator.js";
 import { listVfxPresets, listVfxComposites, VfxDomain } from "./vfx/presets.js";
 import { buildVfxPlanFromPrompt } from "./vfx/vfxPlanner.js";
+import { writeEnginePackage, inferC4dRequested } from "./engine/package.js";
 import { resolveAerender, resolveAfterEffects, runJsx, runAerender } from "./ae/runner.js";
 import {
   OpLog,
@@ -729,6 +732,109 @@ server.tool(
       });
     } catch (e) {
       return errorResult(`create_game_vfx_from_prompt failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 16: create_game_engine_vfx_package
+ * ------------------------------------------------------------------ */
+server.tool(
+  "create_game_engine_vfx_package",
+  "Create a Unity/Unreal-ready game VFX package from a prompt. If engine is auto, the prompt " +
+    "can choose Unity, Unreal/Niagara, or both. The package includes an editable AE source AEP, " +
+    "manifest.json, render target metadata for sprite sheets / PNG sequences, and engine import " +
+    "notes. If the user asks for Cinema 4D/Cineware (or supplies c4dScenePath), the generated AE " +
+    "source can import that .c4d scene through AE/Cineware; otherwise it uses After Effects-only VFX.",
+  createGameEngineVfxPackageSchema,
+  async (args: CreateGameEngineVfxPackageInput) => {
+    const log = new OpLog();
+    try {
+      const manifestPath = path.join(args.outputFolder, "manifest.json");
+      const sourceAepPath = path.join(args.outputFolder, "source", `${args.compName}.aep`);
+      await guardOverwrite(manifestPath, args.approveOverwrite);
+      await guardOverwrite(sourceAepPath, args.approveOverwrite);
+      await ensureDir(path.dirname(sourceAepPath));
+
+      const c4dRequested = inferC4dRequested(args.prompt, args.c4dMode as any, args.c4dScenePath);
+      if (args.c4dMode === "require" && !args.c4dScenePath) {
+        throw new Error("c4dMode=require needs c4dScenePath.");
+      }
+      if (args.c4dScenePath) {
+        await assertFile(args.c4dScenePath, "C4D scene");
+        if (!/\.c4d$/i.test(args.c4dScenePath)) {
+          log.warn("c4dScenePath does not end in .c4d; attempting AE import anyway.");
+        }
+      }
+
+      const plan = buildVfxPlanFromPrompt(args.prompt, {
+        duration: args.duration,
+        fps: args.fps,
+        position: args.position as [number, number] | undefined,
+      });
+      plan.composition.width = args.frameWidth;
+      plan.composition.height = args.frameHeight;
+      plan.composition.duration = args.duration;
+      plan.composition.fps = args.fps;
+      plan.composition.name = args.compName;
+      if (args.position == null) {
+        plan.steps.forEach((step) => {
+          if (!step.params) return;
+          if (Array.isArray(step.params.position)) {
+            step.params.position = [args.frameWidth / 2, args.frameHeight / 2];
+          }
+        });
+      }
+
+      const jsx = generatePromptVfxJsx({
+        outputAepPath: sourceAepPath,
+        plan,
+        c4dScenePath: c4dRequested ? args.c4dScenePath : undefined,
+      });
+      const result = await runJsx(jsx, log, { timeoutMs: 1000 * 60 * 5 });
+      if (!result.ok) {
+        return errorResult(
+          `create_game_engine_vfx_package failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+          log
+        );
+      }
+
+      const manifest = await writeEnginePackage({
+        prompt: args.prompt,
+        engine: args.engine as any,
+        exportKind: args.exportKind,
+        outputFolder: args.outputFolder,
+        aepPath: result.output || sourceAepPath,
+        compName: args.compName,
+        plan,
+        frameWidth: args.frameWidth,
+        frameHeight: args.frameHeight,
+        fps: args.fps,
+        duration: args.duration,
+        loop: args.loop,
+        blendMode: args.blendMode,
+        c4dMode: args.c4dMode as any,
+        c4dScenePath: c4dRequested ? args.c4dScenePath : undefined,
+      });
+      log.info(`Wrote engine VFX package manifest: ${manifest.files.manifest}`);
+
+      return textResult({
+        ok: true,
+        outputFolder: args.outputFolder,
+        sourceAepPath: manifest.sourceAepPath,
+        manifestPath: manifest.files.manifest,
+        engine: manifest.engine,
+        exportKind: manifest.exportKind,
+        c4d: manifest.c4d,
+        renderTargets: manifest.renderTargets,
+        files: manifest.files,
+        matched: plan.matched,
+        notes: plan.notes,
+        aeLog: result.jsxLog,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`create_game_engine_vfx_package failed: ${(e as Error).message}`, log);
     }
   }
 );

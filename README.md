@@ -70,6 +70,7 @@ run by the AE binary (`aerender` for headless rendering when available).
 | `create_vfx_composition` | Create a brand-new project with a standalone, reusable VFX element comp (explosion, magic circle, fog plate, fire column, laser beam) for compositing into other projects. |
 | `build_complex_vfx` | Build DETAILED, production-grade **composite** VFX in one call. Each recipe stacks many layers/effects into a single professional result with an `intensity` control: `cinematicExplosion`, `magicCast`, `heroEntrance`, `celebration`, `powerSurge`, `stormScene`. Works on an existing AEP or spins up a fresh comp. |
 | `create_game_vfx_from_prompt` | Create game-ready VFX directly from an English/Turkish prompt. Infers effect type, color, intensity and format, then creates a standalone VFX `.aep` or applies the result to an existing project. |
+| `create_game_engine_vfx_package` | Create a Unity/Unreal-ready VFX package from a prompt: editable source `.aep`, manifest, sprite-sheet / PNG-sequence render targets, Unity import notes, Unreal/Niagara notes, and optional C4D/Cineware scene import when requested. |
 
 ### Professional VFX engine (game / cinema / social)
 
@@ -114,6 +115,56 @@ Apply prompt-generated VFX to an existing project:
   "approveOverwrite": true
 }
 ```
+
+### Unity / Unreal engine VFX packages
+
+Use `create_game_engine_vfx_package` when the prompt asks for Unity, Unreal,
+Niagara, VFX Graph, sprite sheets, flipbooks, or engine-ready game assets. With
+`engine: "auto"`, MotionPilot infers the target from the prompt; if no engine is
+mentioned, it defaults to Unity. The package includes:
+
+- editable After Effects source `.aep`
+- `manifest.json` with frame count, FPS, alpha, blend mode, pivot and render targets
+- Unity import notes for Particle System / VFX Graph / URP / HDRP
+- Unreal import notes for Niagara / SubUV / translucent or additive materials
+- render instructions for PNG sequence and sprite-sheet workflows
+
+Example:
+
+```json
+{
+  "prompt": "looping blue magic portal for Unity VFX Graph, additive flipbook",
+  "outputFolder": "/Users/me/vfx/blue_portal_unity",
+  "engine": "auto",
+  "exportKind": "both",
+  "frameWidth": 1024,
+  "frameHeight": 1024,
+  "duration": 2,
+  "fps": 30,
+  "loop": true,
+  "blendMode": "additive",
+  "approveOverwrite": true
+}
+```
+
+If the user explicitly wants Cinema 4D/Cineware, set `c4dMode` and optionally
+provide a `.c4d` scene:
+
+```json
+{
+  "prompt": "Unreal Niagara fire portal using Cinema 4D geometry and AE glow compositing",
+  "outputFolder": "/Users/me/vfx/fire_portal_unreal",
+  "engine": "unreal",
+  "c4dMode": "use",
+  "c4dScenePath": "/Users/me/scenes/portal.c4d",
+  "exportKind": "pngSequence",
+  "approveOverwrite": true
+}
+```
+
+When C4D is requested, MotionPilot attempts to import the `.c4d` scene into the
+AE source comp through the local After Effects/Cineware path. If no C4D scene is
+provided, it still creates an AE-only package unless `c4dMode` is `require`.
 
 The motion planner also gained VFX-grade animation types usable in motion plans: `elasticScale`, `glitchIn`, `neonFlicker`, `chromaSplit`, `flip3D`, `energyTrail`, `motionStreak`, `kineticBounce`.
 

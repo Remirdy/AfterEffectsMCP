@@ -230,6 +230,46 @@ export const createGameVfxFromPromptSchema = {
   approveOverwrite: z.boolean().default(false).describe("Must be true to overwrite outputAepPath."),
 };
 
+export const createGameEngineVfxPackageSchema = {
+  prompt: z
+    .string()
+    .min(3)
+    .describe(
+      "Natural-language VFX prompt. If engine is auto, words like Unity, Unreal, Niagara, VFX Graph, URP or HDRP select the package target."
+    ),
+  outputFolder: z.string().describe("Folder for the engine-ready VFX package. Created if missing."),
+  engine: z
+    .enum(["auto", "unity", "unreal", "both"])
+    .default("auto")
+    .describe("Target engine package. auto infers from prompt; defaults to Unity when no engine is mentioned."),
+  exportKind: z
+    .enum(["spritesheet", "pngSequence", "both"])
+    .default("both")
+    .describe("Requested engine export format metadata. The tool creates source AEP + manifest/docs; render outputs can be generated from the AEP."),
+  compName: z.string().default("MotionPilot_Engine_VFX"),
+  frameWidth: z.number().int().positive().default(1024),
+  frameHeight: z.number().int().positive().default(1024),
+  duration: z.number().positive().default(2),
+  fps: z.number().positive().default(30),
+  loop: z.boolean().default(false),
+  blendMode: z.enum(["additive", "alphaBlend", "premultipliedAlpha"]).default("additive"),
+  position: z.array(z.number()).length(2).optional().describe("Focal point [x,y] in comp pixels."),
+  c4dMode: z
+    .enum(["auto", "off", "use", "require"])
+    .default("auto")
+    .describe(
+      "Cinema 4D/Cineware behavior. auto uses C4D only when prompt mentions it or c4dScenePath is supplied; require fails if no c4dScenePath is supplied."
+    ),
+  c4dScenePath: z
+    .string()
+    .optional()
+    .describe("Optional absolute path to a .c4d scene to import into the AE source comp via Cineware/AE import."),
+  approveOverwrite: z
+    .boolean()
+    .default(false)
+    .describe("Must be true when outputFolder already contains a manifest/source AEP that would be replaced."),
+};
+
 export const applyVfxSchema = {
   aepPath: z.string().describe("Path to the .aep project the VFX should be applied to."),
   outputAepPath: z.string().describe("Path of the new .aep to save with the VFX applied (a new copy)."),
@@ -353,4 +393,7 @@ export type BuildComplexVfxInput = {
 };
 export type CreateGameVfxFromPromptInput = {
   [K in keyof typeof createGameVfxFromPromptSchema]: z.infer<(typeof createGameVfxFromPromptSchema)[K]>;
+};
+export type CreateGameEngineVfxPackageInput = {
+  [K in keyof typeof createGameEngineVfxPackageSchema]: z.infer<(typeof createGameEngineVfxPackageSchema)[K]>;
 };
