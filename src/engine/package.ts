@@ -48,7 +48,16 @@ export interface EnginePackageManifest {
     alpha: "straight";
     blendMode: "additive" | "alphaBlend" | "premultipliedAlpha";
     recommendedPivot: [number, number];
+    spriteSheet: {
+      columns: number;
+      rows: number;
+      cellWidth: number;
+      cellHeight: number;
+      sheetWidth: number;
+      sheetHeight: number;
+    };
   };
+  engineMapping: EngineEffectMapping[];
   c4d: {
     requested: boolean;
     mode: C4dMode;
@@ -61,6 +70,68 @@ export interface EnginePackageManifest {
     unityNotes?: string;
     unrealNotes?: string;
     renderScript: string;
+  };
+}
+
+export interface EngineEffectMapping {
+  effect: string;
+  category: "additive" | "alphaBlend" | "distortion";
+  unity: { renderer: string; blend: string; vfxGraph: string };
+  unreal: { material: string; blend: string; niagara: string };
+  oneShot: boolean;
+}
+
+/**
+ * Maps each MotionPilot VFX preset/composite to concrete Unity (VFX Graph /
+ * Shuriken) and Unreal (Niagara) integration guidance — so the package reads
+ * like a TD wrote it, not a generic "import the sprite sheet" note.
+ */
+const EFFECT_ENGINE_TABLE: Record<string, Omit<EngineEffectMapping, "effect">> = {
+  energyBurst: { category: "additive", oneShot: true, unity: { renderer: "VFX Graph flipbook (Output Particle Quad)", blend: "Additive", vfxGraph: "Single Burst spawn → Set Lifetime → Flipbook Player, Size over Life curve" }, unreal: { material: "Unlit / Additive", blend: "Additive", niagara: "Spawn Burst Instantaneous → Sprite Renderer SubUV one-shot" } },
+  shockwave: { category: "distortion", oneShot: true, unity: { renderer: "VFX Graph flipbook + Distortion output", blend: "Additive (Soft)", vfxGraph: "Use the flipbook as a normal/distortion source on an expanding ring mesh" }, unreal: { material: "Translucent + Refraction", blend: "Translucent", niagara: "Scale Sprite Size by Life on a single particle, drive distortion via material" } },
+  fireSmoke: { category: "alphaBlend", oneShot: false, unity: { renderer: "VFX Graph flipbook", blend: "Alpha Blend (smoke) / Additive (fire core)", vfxGraph: "Continuous spawn rate, upward Velocity + Turbulence, Color over Life" }, unreal: { material: "Translucent (smoke) / Additive (fire)", blend: "Translucent", niagara: "Spawn Rate emitter, Curl Noise force, SubUV animation" } },
+  lightningBolt: { category: "additive", oneShot: true, unity: { renderer: "VFX Graph flipbook or Line/Strip output", blend: "Additive", vfxGraph: "One-shot burst, very short lifetime, high emissive multiplier + Bloom" }, unreal: { material: "Unlit / Additive emissive", blend: "Additive", niagara: "Beam/Ribbon emitter or SubUV one-shot, drive flicker via dynamic param" } },
+  portal: { category: "additive", oneShot: false, unity: { renderer: "VFX Graph flipbook (loop)", blend: "Additive", vfxGraph: "Loop-authored flipbook, rotate UV, emissive core mesh behind" }, unreal: { material: "Additive panner", blend: "Additive", niagara: "Looping SubUV, World-aligned, rotating mesh core" } },
+  forceField: { category: "alphaBlend", oneShot: false, unity: { renderer: "Mesh + Fresnel shader (flipbook as impact overlay)", blend: "Alpha Blend", vfxGraph: "Use flipbook for impact ripples; dome is a fresnel mesh shader" }, unreal: { material: "Translucent Fresnel", blend: "Translucent", niagara: "Impact ripples as SubUV decals on a fresnel dome mesh" } },
+  hitSpark: { category: "additive", oneShot: true, unity: { renderer: "VFX Graph flipbook", blend: "Additive", vfxGraph: "Tiny one-shot burst, very short life, no gravity" }, unreal: { material: "Additive", blend: "Additive", niagara: "Instant burst, short lifetime SubUV" } },
+  muzzleFlash: { category: "additive", oneShot: true, unity: { renderer: "VFX Graph flipbook", blend: "Additive", vfxGraph: "1-frame-ish flash, attach to muzzle socket, randomize roll" }, unreal: { material: "Additive", blend: "Additive", niagara: "Single particle, socket-attached, brief life SubUV" } },
+  disintegrate: { category: "alphaBlend", oneShot: true, unity: { renderer: "VFX Graph + dissolve shader on mesh", blend: "Alpha Blend", vfxGraph: "Spawn from skinned mesh, dissolve clip mask drives particle emission" }, unreal: { material: "Masked dissolve + Translucent particles", blend: "Masked", niagara: "Emit from mesh reproduction, dissolve mask in material" } },
+  rainStorm: { category: "alphaBlend", oneShot: false, unity: { renderer: "VFX Graph flipbook (loop)", blend: "Alpha Blend", vfxGraph: "High spawn rate, downward velocity, world-space, stretched billboards" }, unreal: { material: "Translucent", blend: "Translucent", niagara: "Spawn Rate, gravity, velocity-aligned ribbons" } },
+};
+
+function defaultMapping(effect: string): EngineEffectMapping {
+  return {
+    effect,
+    category: "additive",
+    oneShot: true,
+    unity: { renderer: "VFX Graph flipbook (Output Particle Quad)", blend: "Additive", vfxGraph: "Burst spawn → Flipbook Player, Size/Color over Life" },
+    unreal: { material: "Unlit / Additive", blend: "Additive", niagara: "Burst emitter → Sprite Renderer SubUV" },
+    ...(EFFECT_ENGINE_TABLE[effect] ? { ...EFFECT_ENGINE_TABLE[effect] } : {}),
+  };
+}
+
+function buildEngineMapping(plan: VfxPlan): EngineEffectMapping[] {
+  const seen = new Set<string>();
+  const out: EngineEffectMapping[] = [];
+  for (const step of plan.steps) {
+    if (seen.has(step.name)) continue;
+    seen.add(step.name);
+    out.push(defaultMapping(step.name));
+  }
+  return out;
+}
+
+/** Choose a near-square sprite-sheet grid for a given frame count. */
+function spriteGrid(frameCount: number, frameW: number, frameH: number) {
+  const columns = Math.ceil(Math.sqrt(frameCount));
+  const rows = Math.ceil(frameCount / columns);
+  return {
+    columns,
+    rows,
+    cellWidth: frameW,
+    cellHeight: frameH,
+    sheetWidth: columns * frameW,
+    sheetHeight: rows * frameH,
   };
 }
 
@@ -105,6 +176,25 @@ Prompt: ${manifest.prompt}
 - Unity VFX Graph: use Flipbook Player with ${manifest.renderSettings.frameCount} frames at ${manifest.renderSettings.fps} FPS.
 - Particle System: Texture Sheet Animation module can read the sprite-sheet grid after render.
 
+## Sprite Sheet Grid
+
+- Grid: ${manifest.renderSettings.spriteSheet.columns} columns × ${manifest.renderSettings.spriteSheet.rows} rows (${manifest.renderSettings.frameCount} frames).
+- Cell size: ${manifest.renderSettings.spriteSheet.cellWidth}×${manifest.renderSettings.spriteSheet.cellHeight}px.
+- Sheet size: ${manifest.renderSettings.spriteSheet.sheetWidth}×${manifest.renderSettings.spriteSheet.sheetHeight}px.
+- Shuriken Texture Sheet Animation: set Tiles X=${manifest.renderSettings.spriteSheet.columns}, Y=${manifest.renderSettings.spriteSheet.rows}, Frame over Time = linear 0→1.
+
+## Per-Effect Integration
+
+${manifest.engineMapping
+  .map(
+    (m) =>
+      `### ${m.effect} (${m.category}${m.oneShot ? ", one-shot" : ", looping"})\n` +
+      `- Renderer: ${m.unity.renderer}\n` +
+      `- Blend: ${m.unity.blend}\n` +
+      `- VFX Graph: ${m.unity.vfxGraph}`
+  )
+  .join("\n\n")}
+
 ## Source
 
 The editable source comp is:
@@ -136,6 +226,24 @@ Prompt: ${manifest.prompt}
 - Use the manifest frame count and sprite-sheet grid after render.
 - Impacts and attacks should be one-shot emitters.
 - Portals, auras and environmental effects can loop if the render is authored as loop-ready.
+
+## Sprite Sheet Grid (SubUV)
+
+- SubImages: Horizontal=${manifest.renderSettings.spriteSheet.columns}, Vertical=${manifest.renderSettings.spriteSheet.rows} (${manifest.renderSettings.frameCount} frames).
+- Cell: ${manifest.renderSettings.spriteSheet.cellWidth}×${manifest.renderSettings.spriteSheet.cellHeight}px — set the SubUV material node accordingly.
+- Drive "SubUVAnimation" module / Particles.SubImageIndex from 0→${manifest.renderSettings.frameCount - 1} over lifetime.
+
+## Per-Effect Integration
+
+${manifest.engineMapping
+  .map(
+    (m) =>
+      `### ${m.effect} (${m.category}${m.oneShot ? ", one-shot" : ", looping"})\n` +
+      `- Material: ${m.unreal.material}\n` +
+      `- Blend Mode: ${m.unreal.blend}\n` +
+      `- Niagara: ${m.unreal.niagara}`
+  )
+  .join("\n\n")}
 
 ## Source
 
@@ -187,6 +295,8 @@ export async function writeEnginePackage(opts: EnginePackageOptions): Promise<En
 
   const manifestPath = path.join(opts.outputFolder, "manifest.json");
   const frameCount = Math.round(opts.duration * opts.fps);
+  const grid = spriteGrid(frameCount, opts.frameWidth, opts.frameHeight);
+  const engineMapping = buildEngineMapping(opts.plan);
   const manifest: EnginePackageManifest = {
     packageType: "motionpilot_game_engine_vfx",
     prompt: opts.prompt,
@@ -212,7 +322,9 @@ export async function writeEnginePackage(opts: EnginePackageOptions): Promise<En
       alpha: "straight",
       blendMode: opts.blendMode,
       recommendedPivot: [0.5, 0.5],
+      spriteSheet: grid,
     },
+    engineMapping,
     c4d: {
       requested: requestedC4d,
       mode: opts.c4dMode,

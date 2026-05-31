@@ -316,6 +316,45 @@ export function buildMotionPlan(
     }
   }
 
+  // 9. Professional secondary-motion polish layer (rich density only).
+  //    The "living frame" feel: breathing backgrounds, a hero that settles into
+  //    a gentle depth drift, and a controlled micro-impact on the CTA.
+  if (profile.density === "rich") {
+    const bgFirst = bg[0];
+    if (bgFirst) {
+      animations.push({
+        target: /^BG_/i.test(bgFirst.name) ? "BG_" : bgFirst.name,
+        type: "breathBlur",
+        start: 0,
+        duration,
+        strength: 8,
+        ease: easeFor(style, "loop"),
+      });
+    }
+    const heroSettle = mockups[0] ?? (byRole.get("logo") ?? [])[0];
+    if (heroSettle) {
+      animations.push({
+        target: heroSettle.name,
+        type: "depthDrift",
+        start: round(2.3),
+        duration: Math.max(1.5, round(duration - 2.3)),
+        strength: 18,
+        ease: easeFor(style, "loop"),
+      });
+    }
+    const ctaBtn = (byRole.get("button") ?? [])[0];
+    if (ctaBtn) {
+      animations.push({
+        target: ctaBtn.name,
+        type: "microShake",
+        start: round(2.62),
+        duration: round(0.28),
+        strength: 3,
+        ease: easeFor(style, "bounce"),
+      });
+    }
+  }
+
   // Ensure any text animation stays within text-safe types.
   for (const a of animations) {
     const layer = report.layers.find((l) => l.name === a.target);

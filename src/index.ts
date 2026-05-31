@@ -10,6 +10,8 @@ import {
   createVideoPromptPackageSchema,
   createImageAssetPackSchema,
   create3dSceneFromAssetsSchema,
+  buildCinematicCommercialSchema,
+  buildProceduralCommercialSchema,
   importPsdToAeSchema,
   animateAeProjectSchema,
   renderPreviewSchema,
@@ -34,6 +36,8 @@ import {
   CreateVideoPromptPackageInput,
   CreateImageAssetPackInput,
   Create3dSceneFromAssetsInput,
+  BuildCinematicCommercialInput,
+  BuildProceduralCommercialInput,
   ImportPsdInput,
   AnimateInput,
   RenderInput,
@@ -51,7 +55,10 @@ import {
   generateExecuteActionsJsx,
   generateCreate3dSceneJsx,
 } from "./ae/jsxGenerator.js";
+import { generateCommercialJsx } from "./ae/commercialJsxGenerator.js";
+import { generateProceduralCommercialJsx } from "./ae/proceduralCommercialJsxGenerator.js";
 import { generateApplyVfxJsx, generateCreateVfxCompJsx, generateComplexVfxJsx, generatePromptVfxJsx } from "./ae/vfxGenerator.js";
+import { generateVideoCompositionFromPackageJsx } from "./ae/videoJsxGenerator.js";
 import { listVfxPresets, listVfxComposites, VfxDomain } from "./vfx/presets.js";
 import { buildVfxPlanFromPrompt } from "./vfx/vfxPlanner.js";
 import { writeEnginePackage, inferC4dRequested } from "./engine/package.js";
@@ -169,14 +176,44 @@ server.tool(
     const log = new OpLog();
     try {
       const pkg = buildVideoPromptPackage(args);
+
+      let aeResult: { outputAepPath: string; aeLog: string } | null = null;
+      if (args.includeAeComposition) {
+        if (!args.outputAepPath) {
+          return errorResult("outputAepPath is required when includeAeComposition is true.", log);
+        }
+        await guardOverwrite(args.outputAepPath, args.approveOverwrite);
+        await ensureDir(path.dirname(args.outputAepPath));
+
+        const jsx = generateVideoCompositionFromPackageJsx({
+          outputAepPath: args.outputAepPath,
+          packageData: pkg,
+          compName: args.brandName,
+        });
+
+        const result = await runJsx(jsx, log);
+        if (!result.ok) {
+          return errorResult(
+            `create_video_prompt_package failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+            log
+          );
+        }
+        aeResult = {
+          outputAepPath: result.output || args.outputAepPath,
+          aeLog: result.jsxLog || "",
+        };
+      }
+
       if (args.outputJsonPath) {
         await ensureDir(path.dirname(args.outputJsonPath));
         await writeJson(args.outputJsonPath, pkg);
         log.info(`Wrote video prompt package: ${args.outputJsonPath}`);
       }
+
       return textResult({
         ...pkg,
         outputJsonPath: args.outputJsonPath ?? null,
+        aeComposition: aeResult,
         log: log.all,
       });
     } catch (e) {
@@ -249,6 +286,150 @@ server.tool(
       });
     } catch (e) {
       return errorResult(`create_3d_scene_from_assets failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 5b: build_cinematic_commercial
+ * ------------------------------------------------------------------ */
+server.tool(
+  "build_cinematic_commercial",
+  "Build a fully-structured premium 9:16 commercial in After Effects from procedural brand " +
+    "assets: named precomps (01_BACKGROUND…08_FINAL_PACKSHOT), a null-driven 3D camera, a five-scene " +
+    "timeline (Intro → Product Hero → Features → Energy Build → Final CTA), section + sound-design " +
+    "markers, animated trim-path HUD feature callouts, and a global finishing pass (motion blur, " +
+    "bloom, cinematic grade, film grain). Logo/brand plates are text-protected and never distorted. " +
+    "Generates a procedural asset pack first unless an assetManifestPath is supplied. Does not render.",
+  buildCinematicCommercialSchema,
+  async (args: BuildCinematicCommercialInput) => {
+    const log = new OpLog();
+    try {
+      await guardOverwrite(args.outputAepPath, args.approveOverwrite);
+      await ensureDir(path.dirname(args.outputAepPath));
+      await ensureDir(args.outputFolder);
+
+      // 1. Obtain the asset manifest (reuse existing, or generate procedurally).
+      let manifest: any;
+      if (args.assetManifestPath) {
+        await assertFile(args.assetManifestPath, "asset manifest");
+        manifest = await readJson(args.assetManifestPath);
+        log.info(`Using existing asset manifest: ${args.assetManifestPath}`);
+      } else {
+        manifest = await createImageAssetPack({
+          prompt: args.prompt,
+          outputFolder: args.outputFolder,
+          width: args.width,
+          height: args.height,
+          style: args.style,
+          palette: args.palette,
+        } as CreateImageAssetPackInput);
+        log.info(`Generated procedural asset pack (${manifest.layerCount} layers).`);
+      }
+
+      // 2. Build the structured commercial JSX and run it.
+      const jsx = generateCommercialJsx({
+        manifest,
+        outputAepPath: args.outputAepPath,
+        duration: args.duration,
+        fps: args.fps,
+        compName: args.compName,
+        brandName: args.brandName,
+        features: args.features,
+      });
+      const result = await runJsx(jsx, log);
+      if (!result.ok) {
+        return errorResult(
+          `build_cinematic_commercial failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+          log
+        );
+      }
+      return textResult({
+        ok: true,
+        outputAepPath: result.output || args.outputAepPath,
+        compName: args.compName,
+        manifestPath: manifest.manifestPath ?? args.assetManifestPath,
+        precomps: ["01_BACKGROUND", "02_PRODUCT_HERO", "03_LOGO_LOCKED", "04_LIGHTING_FX", "05_PARTICLES", "06_CALLOUTS", "07_CAMERA_CONTROL", "08_FINAL_PACKSHOT"],
+        sceneMarkers: ["Intro", "Product Hero", "Features", "Energy Build", "Final CTA"],
+        nextStep: "render_preview for an H.264 social export.",
+        aeLog: result.jsxLog,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`build_cinematic_commercial failed: ${(e as Error).message}`, log);
+    }
+  }
+);
+
+/* ------------------------------------------------------------------ *
+ * Tool 5c: build_procedural_commercial
+ * ------------------------------------------------------------------ */
+server.tool(
+  "build_procedural_commercial",
+  "Build a complete professional commercial directly inside After Effects with no external " +
+    "assets: editable wordmark/logo text, abstract shape-layer icon, gradients, particles, " +
+    "glass UI panels, feature cards, prompt interface, trim-path motion graphics, camera/null " +
+    "2.5D parallax, timeline markers, render-queue setup and finishing layers. Use this for " +
+    "fictional brands, startup launch ads, AI/product promos, social vertical commercials, " +
+    "and any brief that says there are no existing assets. All visible text is supplied by " +
+    "the user or conservative defaults; no lorem ipsum or fake paragraphs are generated.",
+  buildProceduralCommercialSchema,
+  async (args: BuildProceduralCommercialInput) => {
+    const log = new OpLog();
+    try {
+      await guardOverwrite(args.outputAepPath, args.approveOverwrite);
+      await ensureDir(path.dirname(args.outputAepPath));
+
+      const jsx = generateProceduralCommercialJsx({
+        outputAepPath: args.outputAepPath,
+        compName: args.compName,
+        brandName: args.brandName,
+        headline: args.headline,
+        features: args.features,
+        promptLine: args.promptLine,
+        tagline: args.tagline,
+        width: args.width,
+        height: args.height,
+        duration: args.duration,
+        fps: args.fps,
+        palette: args.palette,
+        style: args.style,
+      });
+
+      const result = await runJsx(jsx, log);
+      if (!result.ok) {
+        return errorResult(
+          `build_procedural_commercial failed in After Effects: ${result.error}\n--- AE log ---\n${result.jsxLog}`,
+          log
+        );
+      }
+
+      return textResult({
+        ok: true,
+        outputAepPath: result.output || args.outputAepPath,
+        compName: args.compName,
+        format: { width: args.width, height: args.height, duration: args.duration, fps: args.fps },
+        generatedSystems: [
+          "01_BACKGROUND_GRADIENT",
+          "02_PARTICLES_DEPTH",
+          "03_LOGO_ICON",
+          "04_WORDMARK",
+          "05_GLASS_UI_PANELS",
+          "06_FEATURE_CARDS",
+          "07_PROMPT_INTERFACE",
+          "08_MOTION_PATHS",
+          "09_LIGHTING_FX",
+          "10_CAMERA_CONTROL",
+          "11_FINAL_LOCKUP",
+          "12_COLOR_GRADE",
+        ],
+        sceneMarkers: ["Brand Birth", "Product Positioning", "Feature Rhythm", "Prompt Control", "Energy Build", "Final Lockup"],
+        nextStep: "Use render_preview on the returned comp for an H.264 vertical social export.",
+        aeLog: result.jsxLog,
+        log: log.all,
+      });
+    } catch (e) {
+      return errorResult(`build_procedural_commercial failed: ${(e as Error).message}`, log);
     }
   }
 );

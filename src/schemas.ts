@@ -60,9 +60,58 @@ export const createVideoPromptPackageSchema = {
   duration: z.number().positive().default(25).describe("Target total duration in seconds."),
   format: z.enum(["vertical", "horizontal", "square"]).default("vertical"),
   style: z
-    .enum(["brandFilm", "cinematic", "socialAd", "productPromo", "abstractMotion"])
+    .enum(["brandFilm", "cinematic", "socialAd", "productPromo", "abstractMotion", "documentary", "musicVideo"])
     .default("brandFilm"),
   palette: z.array(z.string()).optional().describe("Optional color palette words or hex values."),
+
+  /* ---- Professional cinematic fields ---- */
+  resolution: z
+    .enum(["720p", "1080p", "4k"])
+    .default("1080p")
+    .describe("Target output resolution. Affects comp dimensions and AI prompt specs."),
+  fps: z
+    .number()
+    .positive()
+    .default(30)
+    .describe("Frames per second. Use 24 for cinematic, 30 for standard, 60 for smooth motion."),
+  mood: z
+    .enum(["dramatic", "uplifting", "mysterious", "corporate", "playful", "romantic", "intense", "melancholic", "energetic", "serene"])
+    .optional()
+    .describe("Overall mood/atmosphere of the video. Auto-detected from prompt when omitted."),
+  colorGrade: z
+    .enum(["teal-orange", "cold-blue", "warm-golden", "desaturated", "neon-vibrant", "pastel-soft", "bleach-bypass", "cross-process", "monochrome", "vintage-film", "neutral"])
+    .optional()
+    .describe("Color grading profile. Auto-inferred from mood/style when omitted."),
+  tempo: z
+    .enum(["slow", "medium", "fast", "dynamic"])
+    .optional()
+    .describe("Pacing/tempo of the edit. Affects beat timing, transition density and cut frequency."),
+  transitions: z
+    .enum(["cuts-only", "smooth", "dynamic", "cinematic"])
+    .default("cinematic")
+    .describe("Transition style preference: cuts-only (hard cuts), smooth (dissolves), dynamic (whip-pans/zooms), cinematic (mixed organic)."),
+  musicBpm: z
+    .number()
+    .positive()
+    .optional()
+    .describe("Music BPM for beat-synced editing. Aligns cut points and transitions to musical rhythm."),
+  shotTypes: z
+    .array(z.enum(["wide", "medium", "close", "extreme-close", "aerial", "tracking", "dolly", "crane", "steadicam", "pov", "overhead", "dutch-angle"]))
+    .optional()
+    .describe("Preferred shot types to use. The planner will prioritize these in the beat plan."),
+  includeAeComposition: z
+    .boolean()
+    .default(false)
+    .describe("When true, generates an After Effects composition with title cards, transitions, color grading, camera animation and VFX polish alongside the prompt package."),
+  outputAepPath: z
+    .string()
+    .optional()
+    .describe("Path for the generated AEP when includeAeComposition is true. Required when includeAeComposition is enabled."),
+  approveOverwrite: z
+    .boolean()
+    .default(false)
+    .describe("Must be true to overwrite an existing outputAepPath."),
+
   outputJsonPath: z
     .string()
     .optional()
@@ -84,6 +133,66 @@ export const create3dSceneFromAssetsSchema = {
   duration: z.number().positive().default(12),
   fps: z.number().positive().default(30),
   compName: z.string().default("MotionPilot_3D_Scene"),
+  approveOverwrite: z.boolean().default(false).describe("Must be true to overwrite outputAepPath."),
+};
+
+export const buildCinematicCommercialSchema = {
+  prompt: z.string().min(6).describe("Creative concept for the commercial (drives palette/style of the procedural assets)."),
+  outputFolder: z.string().describe("Folder where the procedural asset pack (PNGs + manifest) is written."),
+  outputAepPath: z.string().describe("Path of the generated structured commercial .aep project."),
+  assetManifestPath: z.string().optional().describe("Optional existing asset-manifest.json. If omitted, a procedural pack is generated from prompt+style."),
+  style: z.enum(["brandFilm", "educationAd", "tech3d", "abstract3d", "socialAd"]).default("tech3d"),
+  palette: z.array(z.string()).optional().describe("Optional color palette as hex values or color words."),
+  brandName: z.string().optional().describe("Brand name for the logo lockup (text stays sharp, never distorted)."),
+  features: z.array(z.string()).max(3).optional().describe("Up to three feature callout labels (5s–8s section)."),
+  width: z.number().int().positive().default(1080),
+  height: z.number().int().positive().default(1920),
+  duration: z.number().positive().default(12),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MotionPilot_Commercial"),
+  approveOverwrite: z.boolean().default(false).describe("Must be true to overwrite outputAepPath."),
+};
+
+export const buildProceduralCommercialSchema = {
+  prompt: z
+    .string()
+    .min(6)
+    .describe(
+      "Creative brief for an editable, asset-free After Effects commercial. Use when there are no source assets and the ad should be built from text, shape layers, gradients, particles, cameras and motion graphics."
+    ),
+  outputAepPath: z.string().describe("Path of the generated structured commercial .aep project."),
+  brandName: z.string().describe("Brand/product name to use as editable wordmark text."),
+  headline: z
+    .string()
+    .optional()
+    .describe("Primary product positioning line. Kept verbatim and readable."),
+  features: z
+    .array(z.string())
+    .max(3)
+    .optional()
+    .describe("Up to three short feature cards. Kept verbatim; no fake placeholder text is generated."),
+  promptLine: z
+    .string()
+    .optional()
+    .describe("Prompt/control moment line. Kept verbatim and readable."),
+  tagline: z
+    .string()
+    .optional()
+    .describe("Final lockup tagline. Kept verbatim and readable."),
+  palette: z
+    .array(z.string())
+    .max(4)
+    .optional()
+    .describe("Optional hex palette. First = primary accent, second = secondary accent, third = text/light."),
+  style: z
+    .enum(["premiumTech", "cinematic", "minimal", "energetic"])
+    .default("premiumTech")
+    .describe("Procedural motion-graphics style profile."),
+  width: z.number().int().positive().default(1080),
+  height: z.number().int().positive().default(1920),
+  duration: z.number().positive().default(12),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("00_MASTER_COMP"),
   approveOverwrite: z.boolean().default(false).describe("Must be true to overwrite outputAepPath."),
 };
 
@@ -379,6 +488,12 @@ export type CreateImageAssetPackInput = {
 };
 export type Create3dSceneFromAssetsInput = {
   [K in keyof typeof create3dSceneFromAssetsSchema]: z.infer<(typeof create3dSceneFromAssetsSchema)[K]>;
+};
+export type BuildCinematicCommercialInput = {
+  [K in keyof typeof buildCinematicCommercialSchema]: z.infer<(typeof buildCinematicCommercialSchema)[K]>;
+};
+export type BuildProceduralCommercialInput = {
+  [K in keyof typeof buildProceduralCommercialSchema]: z.infer<(typeof buildProceduralCommercialSchema)[K]>;
 };
 export type ImportPsdInput = {
   [K in keyof typeof importPsdToAeSchema]: z.infer<(typeof importPsdToAeSchema)[K]>;
