@@ -1,0 +1,9 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &100000
+GameObject:
+  m_Name: PF_ArcaneLightningImpact_Pro
+  MotionPilot:
+    renderer: ParticleSystem or VisualEffect
+    material: M_ArcaneLightningImpact_Pro_additive
+    note: Scaffold prefab stub; create final prefab in Unity after importing textures.

@@ -1,0 +1,25 @@
+{
+  "name": "SG_CoinSparklePickup",
+  "type": "MotionPilot ShaderGraph Stub",
+  "effect": "magic",
+  "nodes": [
+    "UV",
+    "Flipbook",
+    "Time",
+    "Gradient Sample",
+    "Fresnel",
+    "Dissolve Noise",
+    "Rim Glow",
+    "Distortion Normal",
+    "Alpha Clip/Blend",
+    "Unlit Master"
+  ],
+  "exposedProperties": [
+    "Color",
+    "Emission",
+    "DissolveAmount",
+    "DistortionStrength",
+    "FlipbookRows",
+    "FlipbookColumns"
+  ]
+}

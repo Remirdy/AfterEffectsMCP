@@ -1,0 +1,33 @@
+{
+  "name": "VFX_ToonStarHit_Pop",
+  "type": "MotionPilot VFX Graph Template",
+  "effect": "impact",
+  "contexts": [
+    {
+      "name": "Single Burst",
+      "recommended": "1 burst at trigger time"
+    },
+    {
+      "name": "Initialize Particle",
+      "lifetime": "0.2-1.2s"
+    },
+    {
+      "name": "Update Particle",
+      "blocks": [
+        "Velocity",
+        "Turbulence",
+        "Drag",
+        "Size over Life",
+        "Color over Life"
+      ]
+    },
+    {
+      "name": "Output Particle Quad",
+      "blocks": [
+        "Flipbook Player",
+        "Soft Particles",
+        "Additive/Alpha Blend"
+      ]
+    }
+  ]
+}

@@ -8,6 +8,45 @@ A **local MCP server** for analyzing **PSD** files and building animated
 **Adobe After Effects** projects, with saved `.aep` output and optional
 `.mp4`/`.mov` previews.
 
+## Premium Unity VFX sample
+
+MotionPilot can also generate Unity-ready, asset-store-style VFX packages:
+transparent PNG frame sequences, flipbook sprite sheets, manifests, URP
+material/prefab scaffolds, VFX Graph / Shader Graph notes, marketplace preview
+media and documentation.
+
+<p align="center">
+  <img src="./assets/arcane-lightning-impact-preview.gif" alt="Arcane Lightning Impact Pro animated Unity VFX preview" width="384">
+</p>
+
+Generated example:
+
+- [ArcaneLightningImpact_Pro](./examples/generated/premium_arcane_lightning_impact_pack/ArcaneLightningImpact_Pro)
+- 64 transparent PNG frames at `512x512`
+- `4096x4096` 8x8 Unity flipbook sprite sheet
+- marketplace hero/contact sheet
+- URP additive material, prefab, VFX Graph and Shader Graph scaffolds
+
+Action-game sample bundle:
+
+| Effect | Preview | Package |
+| --- | --- | --- |
+| Crimson Sword Slash | <img src="./examples/generated/action_game_vfx_pro_pack/CrimsonSwordSlash_Pro/Marketplace/CrimsonSwordSlash_Pro_preview.gif" width="160" alt="Crimson Sword Slash VFX preview"> | [CrimsonSwordSlash_Pro](./examples/generated/action_game_vfx_pro_pack/CrimsonSwordSlash_Pro) |
+| Muzzle Spark Burst | <img src="./examples/generated/action_game_vfx_pro_pack/MuzzleSparkBurst_Pro/Marketplace/MuzzleSparkBurst_Pro_preview.gif" width="160" alt="Muzzle Spark Burst VFX preview"> | [MuzzleSparkBurst_Pro](./examples/generated/action_game_vfx_pro_pack/MuzzleSparkBurst_Pro) |
+| Heavy Ground Shockwave | <img src="./examples/generated/action_game_vfx_pro_pack/HeavyGroundShockwave_Pro/Marketplace/HeavyGroundShockwave_Pro_preview.gif" width="160" alt="Heavy Ground Shockwave VFX preview"> | [HeavyGroundShockwave_Pro](./examples/generated/action_game_vfx_pro_pack/HeavyGroundShockwave_Pro) |
+| Inferno Hit Burst | <img src="./examples/generated/action_game_vfx_pro_pack/InfernoHitBurst_Pro/Marketplace/InfernoHitBurst_Pro_preview.gif" width="160" alt="Inferno Hit Burst VFX preview"> | [InfernoHitBurst_Pro](./examples/generated/action_game_vfx_pro_pack/InfernoHitBurst_Pro) |
+
+Cartoon-game sample bundle:
+
+| Effect | Preview | Package |
+| --- | --- | --- |
+| Toon Star Hit | <img src="./examples/generated/cartoon_game_vfx_pack/ToonStarHit_Pop/Marketplace/ToonStarHit_Pop_preview.gif" width="160" alt="Toon Star Hit cartoon VFX preview"> | [ToonStarHit_Pop](./examples/generated/cartoon_game_vfx_pack/ToonStarHit_Pop) |
+| Bubble Shield | <img src="./examples/generated/cartoon_game_vfx_pack/BubbleShield_Boop/Marketplace/BubbleShield_Boop_preview.gif" width="160" alt="Bubble Shield cartoon VFX preview"> | [BubbleShield_Boop](./examples/generated/cartoon_game_vfx_pack/BubbleShield_Boop) |
+| Candy Heal Hearts | <img src="./examples/generated/cartoon_game_vfx_pack/CandyHealHearts/Marketplace/CandyHealHearts_preview.gif" width="160" alt="Candy Heal Hearts cartoon VFX preview"> | [CandyHealHearts](./examples/generated/cartoon_game_vfx_pack/CandyHealHearts) |
+| Puff Smoke Poof | <img src="./examples/generated/cartoon_game_vfx_pack/PuffSmokePoof/Marketplace/PuffSmokePoof_preview.gif" width="160" alt="Puff Smoke Poof cartoon VFX preview"> | [PuffSmokePoof](./examples/generated/cartoon_game_vfx_pack/PuffSmokePoof) |
+| Coin Sparkle Pickup | <img src="./examples/generated/cartoon_game_vfx_pack/CoinSparklePickup/Marketplace/CoinSparklePickup_preview.gif" width="160" alt="Coin Sparkle Pickup cartoon VFX preview"> | [CoinSparklePickup](./examples/generated/cartoon_game_vfx_pack/CoinSparklePickup) |
+| Goo Splash Impact | <img src="./examples/generated/cartoon_game_vfx_pack/GooSplashImpact/Marketplace/GooSplashImpact_preview.gif" width="160" alt="Goo Splash Impact cartoon VFX preview"> | [GooSplashImpact](./examples/generated/cartoon_game_vfx_pack/GooSplashImpact) |
+
 The intended workflow: provide a PSD and a motion direction like *"Build a
 premium After Effects animation where the title fades in, the mockup slides with
 depth, UI cards stagger in, and the background has subtle parallax."* The server
