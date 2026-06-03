@@ -1,0 +1,15 @@
+{
+  "kind": "magic",
+  "framesFolder": "/Users/emirhan/Desktop/After_Effects_MCP/motionpilot-ae-mcp/examples/generated/action_game_vfx_pro_pack/CrimsonSwordSlash_Pro/Textures/frames",
+  "firstFramePath": "/Users/emirhan/Desktop/After_Effects_MCP/motionpilot-ae-mcp/examples/generated/action_game_vfx_pro_pack/CrimsonSwordSlash_Pro/Textures/frames/frame_0000.png",
+  "framePattern": "/Users/emirhan/Desktop/After_Effects_MCP/motionpilot-ae-mcp/examples/generated/action_game_vfx_pro_pack/CrimsonSwordSlash_Pro/Textures/frames/frame_%04d.png",
+  "width": 384,
+  "height": 384,
+  "frames": 48,
+  "fps": 30,
+  "notes": [
+    "High-quality VFX plates are raster/noise/particle-field based by default.",
+    "Geometric AE shape fallbacks should be used only when raster plate generation is unavailable.",
+    "Fire uses an organic turbulent heat field plus real spark streaks and smoke/glow volumes."
+  ]
+}

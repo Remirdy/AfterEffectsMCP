@@ -1606,3 +1606,206 @@ export function generateVideoCompositionFromPackageJsx(
     plan,
   });
 }
+
+function socialPalette(palette?: string[]): string[] {
+  return palette && palette.length > 0
+    ? palette
+    : ["#111827", "#F97316", "#22D3EE", "#F8FAFC", "#EC4899"];
+}
+
+function socialPrelude(palette?: string[]): string {
+  return `
+    var palette = ${jsonLiteral(socialPalette(palette))};
+    function hexToRGB(hex) {
+      if (hex.charAt(0) === "#") hex = hex.substr(1);
+      return [parseInt(hex.substr(0,2),16)/255, parseInt(hex.substr(2,2),16)/255, parseInt(hex.substr(4,2),16)/255];
+    }
+    function textStyle(layer, size, color, font) {
+      try {
+        var p = layer.property("ADBE Text Properties").property("ADBE Text Document");
+        var v = p.value;
+        v.fontSize = size;
+        v.font = font || "Arial Black";
+        v.fillColor = color;
+        v.justification = ParagraphJustification.CENTER_JUSTIFY;
+        p.setValue(v);
+      } catch (e) {}
+    }
+    function addRoundRect(comp, name, pos, size, color, opacity) {
+      var l = comp.layers.addShape();
+      l.name = name;
+      var root = l.property("ADBE Root Vectors Group");
+      var g = root.addProperty("ADBE Vector Group");
+      var v = g.property("ADBE Vectors Group");
+      var r = v.addProperty("ADBE Vector Shape - Rect");
+      try { r.property("ADBE Vector Rect Size").setValue(size); r.property("ADBE Vector Rect Roundness").setValue(26); } catch(e) {}
+      var f = v.addProperty("ADBE Vector Graphic - Fill");
+      try { f.property("ADBE Vector Fill Color").setValue([color[0], color[1], color[2], opacity == null ? 1 : opacity]); } catch(e) {}
+      var p = l.property("ADBE Transform Group").property("ADBE Position");
+      if (p) p.setValue(pos);
+      return l;
+    }
+  `;
+}
+
+export function generateReelTemplateJsx(opts: {
+  outputAepPath: string;
+  brandName: string;
+  hookText: string;
+  ctaTexts: string[];
+  musicBpm: number;
+  palette?: string[];
+  includeSafeGuides: boolean;
+  width: number;
+  height: number;
+  duration: number;
+  fps: number;
+  compName: string;
+}): string {
+  const ctas = opts.ctaTexts.length ? opts.ctaTexts : ["FOLLOW", "SAVE", "SHARE"];
+  const body = `
+    app.newProject();
+    var comp = app.project.items.addComp(${jstr(opts.compName)}, ${opts.width}, ${opts.height}, 1, ${opts.duration}, ${opts.fps});
+    var cw = comp.width; var ch = comp.height; var dur = comp.duration;
+${socialPrelude(opts.palette)}
+    var bg = comp.layers.addSolid(hexToRGB(palette[0]), "BG_Reel_Gradient", cw, ch, 1, dur);
+    var ramp = bg.property("ADBE Effect Parade").addProperty("ADBE Ramp");
+    if (ramp) { try { ramp.property("ADBE Ramp-0001").setValue([cw*0.15,0]); ramp.property("ADBE Ramp-0002").setValue(hexToRGB(palette[0])); ramp.property("ADBE Ramp-0003").setValue([cw*0.9,ch]); ramp.property("ADBE Ramp-0004").setValue(hexToRGB(palette[2] || palette[1])); ramp.property("ADBE Ramp-0005").setValue(2); } catch(e) {} }
+    MPVFX.run(comp, "bokeh", { strength: 18, count: 8, color: hexToRGB(palette[2] || "#22D3EE") });
+
+    var brand = comp.layers.addText(${jstr(opts.brandName)});
+    brand.name = "BRAND_Handle";
+    textStyle(brand, Math.round(cw * 0.045), hexToRGB(palette[3] || "#FFFFFF"), "Arial");
+    var brandPos = brand.property("ADBE Transform Group").property("ADBE Position"); if (brandPos) brandPos.setValue([cw/2, ch*0.085]);
+
+    var hook = comp.layers.addText(${jstr(opts.hookText)});
+    hook.name = "HOOK_Animated_Text";
+    textStyle(hook, Math.round(cw * 0.105), hexToRGB(palette[3] || "#FFFFFF"), "Arial Black");
+    var hp = hook.property("ADBE Transform Group").property("ADBE Position"); if (hp) { hp.setValueAtTime(0, [cw/2, ch*0.43]); hp.setValueAtTime(0.35, [cw/2, ch*0.34]); MP.setEase(hp, "expoOut"); }
+    var hs = hook.property("ADBE Transform Group").property("ADBE Scale"); if (hs) { hs.setValueAtTime(0, [42,42]); hs.setValueAtTime(0.18, [118,118]); hs.setValueAtTime(0.32, [100,100]); MP.setEase(hs, "expoOut"); }
+    var hg = hook.property("ADBE Effect Parade").addProperty("ADBE Glow"); if (hg) { try { hg.property("ADBE Glow-0003").setValue(45); hg.property("ADBE Glow-0004").setValue(2.2); } catch(e) {} }
+
+    var ctas = ${jsonLiteral(ctas)};
+    for (var i = 0; i < ctas.length; i++) {
+      var y = ch * (0.62 + i * 0.075);
+      var t0 = Math.max(1.2, dur - (ctas.length - i) * 1.15 - 0.25);
+      var t1 = Math.min(dur - 0.1, t0 + 1.05);
+      var card = addRoundRect(comp, "CTA_" + (i+1) + "_Card", [cw/2, y], [cw*0.78, ch*0.09], hexToRGB(palette[(i+1) % palette.length]), 0.92);
+      var co = card.property("ADBE Transform Group").property("ADBE Opacity"); if (co) { co.setValueAtTime(t0,0); co.setValueAtTime(t0+0.15,100); co.setValueAtTime(t1-0.15,100); co.setValueAtTime(t1,0); }
+      var label = comp.layers.addText(ctas[i]); label.name = "CTA_" + (i+1) + "_Text";
+      textStyle(label, Math.round(cw * 0.055), hexToRGB(palette[3] || "#FFFFFF"), "Arial Black");
+      var lp = label.property("ADBE Transform Group").property("ADBE Position"); if (lp) lp.setValue([cw/2, y + 8]);
+      var lo = label.property("ADBE Transform Group").property("ADBE Opacity"); if (lo) { lo.setValueAtTime(t0,0); lo.setValueAtTime(t0+0.16,100); lo.setValueAtTime(t1-0.1,100); lo.setValueAtTime(t1,0); }
+    }
+
+    var markerLayer = comp.layers.addNull(dur); markerLayer.name = "MUSIC_Beat_Markers_" + ${opts.musicBpm};
+    var markers = markerLayer.property("ADBE Marker"); var beat = 60 / ${opts.musicBpm};
+    for (var bi = 0; bi * beat < dur; bi++) { try { markers.setValueAtTime(bi * beat, new MarkerValue("Beat " + (bi+1))); } catch(e) {} }
+    comp.markerProperty.setValueAtTime(0, new MarkerValue("EXPORT 9:16 1080x1920 H.264"));
+    ${opts.includeSafeGuides ? `
+    var guide = addRoundRect(comp, "GUIDE_Safe_Areas_DO_NOT_RENDER", [cw/2,ch/2], [cw*0.86, ch*0.78], [1,1,1], 0);
+    guide.guideLayer = true;
+    var gv = guide.property("ADBE Root Vectors Group").property(1).property("ADBE Vectors Group");
+    var stroke = gv.addProperty("ADBE Vector Graphic - Stroke"); try { stroke.property("ADBE Vector Stroke Color").setValue([1,1,1,0.45]); stroke.property("ADBE Vector Stroke Width").setValue(3); } catch(e) {}
+    ` : ""}
+    MP.log("Instagram Reel template built: hook animation, BPM markers, CTA cards, 9:16 export marker.");
+    app.project.save(new File(${jstr(opts.outputAepPath)}));
+    __result.output = ${jstr(opts.outputAepPath)};
+  `;
+  return withReport(body);
+}
+
+export function generateTiktokTransitionPackJsx(opts: {
+  outputAepPath: string;
+  transitions: string[];
+  palette?: string[];
+  transitionDuration: number;
+  fps: number;
+  width: number;
+  height: number;
+  compPrefix: string;
+}): string {
+  const body = `
+    app.newProject();
+    var names = ${jsonLiteral(opts.transitions)};
+${socialPrelude(opts.palette)}
+    for (var i = 0; i < names.length; i++) {
+      var name = names[i];
+      var comp = app.project.items.addComp(${jstr(opts.compPrefix)} + "_" + (i+1) + "_" + name, ${opts.width}, ${opts.height}, 1, ${opts.transitionDuration}, ${opts.fps});
+      var cw = comp.width; var ch = comp.height; var dur = comp.duration;
+      var a = comp.layers.addSolid(hexToRGB(palette[0]), "SOURCE_A_replace_me", cw, ch, 1, dur);
+      var b = comp.layers.addSolid(hexToRGB(palette[(i+1)%palette.length]), "SOURCE_B_replace_me", cw, ch, 1, dur);
+      var bo = b.property("ADBE Transform Group").property("ADBE Opacity"); if (bo) { bo.setValueAtTime(0,0); bo.setValueAtTime(dur*0.48,0); bo.setValueAtTime(dur*0.52,100); bo.setValueAtTime(dur,100); }
+      var adj = comp.layers.addSolid([1,1,1], "TRANSITION_" + name, cw, ch, 1, dur); try { adj.adjustmentLayer = true; } catch(e) {}
+      if (name === "zoomBlur") {
+        MPVFX.run(comp, "zoomPush", { start: 0, duration: dur, strength: 1.4 });
+      } else if (name === "spin") {
+        var ar = a.property("ADBE Transform Group").property("ADBE Rotate Z"); var br = b.property("ADBE Transform Group").property("ADBE Rotate Z");
+        if (ar) { ar.setValueAtTime(0,0); ar.setValueAtTime(dur,-28); } if (br) { br.setValueAtTime(0,24); br.setValueAtTime(dur,0); }
+        MPVFX.run(comp, "radialBlur", { strength: 70, start: 0, duration: dur });
+      } else if (name === "glitchCut") {
+        MPVFX.run(comp, "glitch", { start: dur*0.28, duration: dur*0.45 }); MPVFX.run(comp, "chromaticAberration", { strength: 18 });
+      } else if (name === "whipPan") {
+        var ap = a.property("ADBE Transform Group").property("ADBE Position"); var bp = b.property("ADBE Transform Group").property("ADBE Position");
+        if (ap) { ap.setValueAtTime(0,[cw/2,ch/2]); ap.setValueAtTime(dur,[-cw*0.6,ch/2]); } if (bp) { bp.setValueAtTime(0,[cw*1.6,ch/2]); bp.setValueAtTime(dur,[cw/2,ch/2]); }
+        MPVFX.run(comp, "whipPan", { start: 0, duration: dur, angle: 0 });
+      } else if (name === "seamlessMorph") {
+        var td = adj.property("ADBE Effect Parade").addProperty("ADBE Turbulent Displace"); if (td) { try { td.property("ADBE Turbulent Displace-0003").setValue(95); td.property("ADBE Turbulent Displace-0004").setValue(170); } catch(e) {} }
+        var mo = adj.property("ADBE Transform Group").property("ADBE Opacity"); if (mo) { mo.setValueAtTime(0,0); mo.setValueAtTime(dur/2,100); mo.setValueAtTime(dur,0); }
+      } else if (name === "rgbSplit") {
+        MPVFX.run(comp, "chromaticAberration", { strength: 32 });
+      } else if (name === "sliceWipe") {
+        var grid = adj.property("ADBE Effect Parade").addProperty("ADBE GRID"); if (grid) { try { grid.property("ADBE GRID-0003").setValue(36); grid.property("ADBE GRID-0004").setValue(ch); } catch(e) {} }
+      } else if (name === "shakeCut") {
+        var np = adj.property("ADBE Transform Group").property("ADBE Position"); if (np) np.expression = "value + wiggle(20,45)";
+      } else if (name === "speedRamp") {
+        var blur = adj.property("ADBE Effect Parade").addProperty("ADBE Directional Blur"); if (blur) { try { blur.property("ADBE Directional Blur-0001").setValue(90); blur.property("ADBE Directional Blur-0002").setValue(80); } catch(e) {} }
+      } else {
+        MPVFX.run(comp, "lightLeak", { start: 0, duration: dur, color: hexToRGB(palette[(i+2)%palette.length]) });
+      }
+      comp.markerProperty.setValueAtTime(dur/2, new MarkerValue("CUT POINT"));
+      MP.log("Transition comp built: " + name);
+    }
+    app.project.save(new File(${jstr(opts.outputAepPath)}));
+    __result.output = ${jstr(opts.outputAepPath)};
+  `;
+  return withReport(body);
+}
+
+export function generateYoutubePackageJsx(opts: {
+  outputAepPath: string;
+  channelName: string;
+  tagline?: string;
+  lowerThirdNames: string[];
+  palette?: string[];
+  style: string;
+  fps: number;
+  width: number;
+  height: number;
+}): string {
+  const body = `
+    app.newProject();
+${socialPrelude(opts.palette)}
+    var lowers = ${jsonLiteral(opts.lowerThirdNames.length ? opts.lowerThirdNames : ["Host", "Guest", "Topic"])};
+    function addBg(comp) { var l = comp.layers.addSolid(hexToRGB(palette[0]), "BG", comp.width, comp.height, 1, comp.duration); var r = l.property("ADBE Effect Parade").addProperty("ADBE Ramp"); if (r) { try { r.property("ADBE Ramp-0001").setValue([0,0]); r.property("ADBE Ramp-0002").setValue(hexToRGB(palette[0])); r.property("ADBE Ramp-0003").setValue([comp.width, comp.height]); r.property("ADBE Ramp-0004").setValue(hexToRGB(palette[2] || palette[1])); r.property("ADBE Ramp-0005").setValue(2); } catch(e) {} } }
+    function addTitle(comp, text, y, size) { var t = comp.layers.addText(text); textStyle(t, size, hexToRGB(palette[3] || "#FFFFFF"), "Arial Black"); var p = t.property("ADBE Transform Group").property("ADBE Position"); if (p) p.setValue([comp.width/2, y]); var s = t.property("ADBE Transform Group").property("ADBE Scale"); if (s) { s.setValueAtTime(0,[70,70]); s.setValueAtTime(0.45,[105,105]); s.setValueAtTime(0.65,[100,100]); MP.setEase(s,"expoOut"); } return t; }
+    var intro = app.project.items.addComp("YT_Intro_Logo_05s", ${opts.width}, ${opts.height}, 1, 5, ${opts.fps}); addBg(intro); addTitle(intro, ${jstr(opts.channelName)}, intro.height*0.46, Math.round(intro.width*0.075)); MPVFX.run(intro, "lightSweep", { targetLayer: "Text*", start: 0.8, duration: 1.4 });
+    ${opts.tagline ? `var tag = intro.layers.addText(${jstr(opts.tagline)}); textStyle(tag, Math.round(intro.width*0.026), hexToRGB(palette[1]), "Arial"); var tp = tag.property("ADBE Transform Group").property("ADBE Position"); if (tp) tp.setValue([intro.width/2, intro.height*0.57]);` : ""}
+    var outro = app.project.items.addComp("YT_Outro_08s", ${opts.width}, ${opts.height}, 1, 8, ${opts.fps}); addBg(outro); addTitle(outro, "THANKS FOR WATCHING", outro.height*0.34, Math.round(outro.width*0.052)); addTitle(outro, "SUBSCRIBE FOR MORE", outro.height*0.46, Math.round(outro.width*0.032));
+    var end = app.project.items.addComp("YT_End_Screen_20s", ${opts.width}, ${opts.height}, 1, 20, ${opts.fps}); addBg(end); addTitle(end, ${jstr(opts.channelName)}, end.height*0.18, Math.round(end.width*0.044));
+    addRoundRect(end, "VIDEO_PLACEHOLDER_1", [end.width*0.32, end.height*0.42], [end.width*0.34, end.height*0.26], [1,1,1], 0.06);
+    addRoundRect(end, "VIDEO_PLACEHOLDER_2", [end.width*0.68, end.height*0.42], [end.width*0.34, end.height*0.26], [1,1,1], 0.06);
+    var subComp = app.project.items.addComp("YT_Subscribe_Animation_04s", ${opts.width}, ${opts.height}, 1, 4, ${opts.fps}); addRoundRect(subComp, "SUBSCRIBE_Button", [subComp.width/2, subComp.height/2], [subComp.width*0.32, subComp.height*0.12], hexToRGB("#EF4444"), 1); addTitle(subComp, "SUBSCRIBE", subComp.height*0.515, Math.round(subComp.width*0.036));
+    for (var i = 0; i < lowers.length; i++) {
+      var lt = app.project.items.addComp("YT_Lower_Third_" + (i+1), ${opts.width}, ${opts.height}, 1, 6, ${opts.fps});
+      var bar = addRoundRect(lt, "LOWER_THIRD_Bar", [lt.width*0.28, lt.height*0.78], [lt.width*0.42, lt.height*0.09], hexToRGB(palette[(i+1)%palette.length]), 0.96);
+      var p = bar.property("ADBE Transform Group").property("ADBE Position"); if (p) { p.setValueAtTime(0,[-lt.width*0.25, lt.height*0.78]); p.setValueAtTime(0.45,[lt.width*0.28, lt.height*0.78]); MP.setEase(p,"expoOut"); }
+      var label = lt.layers.addText(lowers[i]); textStyle(label, Math.round(lt.width*0.028), hexToRGB(palette[3] || "#FFFFFF"), "Arial Black");
+      var lp = label.property("ADBE Transform Group").property("ADBE Position"); if (lp) { lp.setValueAtTime(0,[-lt.width*0.25,lt.height*0.795]); lp.setValueAtTime(0.45,[lt.width*0.28,lt.height*0.795]); MP.setEase(lp,"expoOut"); }
+    }
+    MP.log("YouTube package built: intro, outro, end screen, subscribe animation, lower thirds. Style: ${opts.style}");
+    app.project.save(new File(${jstr(opts.outputAepPath)}));
+    __result.output = ${jstr(opts.outputAepPath)};
+  `;
+  return withReport(body);
+}

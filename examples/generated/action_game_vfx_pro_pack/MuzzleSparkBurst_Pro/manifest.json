@@ -1,0 +1,123 @@
+{
+  "packageType": "motionpilot_unity_vfx_toolkit",
+  "tool": "build_asset_store_vfx_package",
+  "packageName": "MuzzleSparkBurst_Pro",
+  "prompt": "premium muzzle flash spark burst for action shooter, hot sparks and flash",
+  "effect": "impact",
+  "style": "stylized",
+  "target": {
+    "engine": "unity",
+    "pipeline": "urp",
+    "platform": "desktop"
+  },
+  "render": {
+    "width": 384,
+    "height": 384,
+    "fps": 30,
+    "frameCount": 48,
+    "duration": 1.6,
+    "loop": false,
+    "alpha": "straight",
+    "blendMode": "additive",
+    "pivot": [
+      0.5,
+      0.5
+    ],
+    "spriteSheetPath": "/Users/emirhan/Desktop/After_Effects_MCP/motionpilot-ae-mcp/examples/generated/action_game_vfx_pro_pack/MuzzleSparkBurst_Pro/Textures/MuzzleSparkBurst_Pro_8x6.png",
+    "pngSequenceFolder": "/Users/emirhan/Desktop/After_Effects_MCP/motionpilot-ae-mcp/examples/generated/action_game_vfx_pro_pack/MuzzleSparkBurst_Pro/Textures/frames",
+    "grid": {
+      "columns": 8,
+      "rows": 6,
+      "capacity": 48,
+      "cellWidth": 384,
+      "cellHeight": 384,
+      "sheetWidth": 3072,
+      "sheetHeight": 2304
+    },
+    "actualGenerated": true
+  },
+  "budget": {
+    "maxTextureSize": 2048,
+    "particleBudget": 350,
+    "overdrawBudget": 5,
+    "textureMemoryMBApprox": 27
+  },
+  "elements": [
+    "demo_scene",
+    "prefabs",
+    "thumbnails",
+    "documentation",
+    "pack_index",
+    "urp_hdrp_variants"
+  ],
+  "variants": {
+    "count": 8,
+    "qualityTarget": "assetStore",
+    "naming": "MuzzleSparkBurst_Pro_Variant_##",
+    "seedStrategy": "deterministic_seed_per_variant"
+  },
+  "phases": [
+    {
+      "name": "spawn",
+      "startFrame": 0,
+      "endFrame": 15,
+      "role": "anticipation/setup"
+    },
+    {
+      "name": "peak",
+      "startFrame": 16,
+      "endFrame": 31,
+      "role": "peak/action"
+    },
+    {
+      "name": "decay",
+      "startFrame": 32,
+      "endFrame": 47,
+      "role": "decay/cleanup"
+    }
+  ],
+  "unity": {
+    "importSettings": {
+      "textureType": "Default",
+      "alphaIsTransparency": true,
+      "sRGB": true,
+      "wrapMode": "Clamp",
+      "filterMode": "Bilinear",
+      "compression": "None or High Quality"
+    },
+    "material": "Materials/M_MuzzleSparkBurst_Pro_additive.mat",
+    "prefab": "Prefabs/PF_MuzzleSparkBurst_Pro.prefab",
+    "vfxGraph": "VFXGraph/VFX_MuzzleSparkBurst_Pro.json",
+    "shaderGraph": "ShaderGraph/SG_MuzzleSparkBurst_Pro.json"
+  },
+  "recommendations": [
+    "Use additive material with bloom for energy/impact readability.",
+    "Author high-res flipbook, then generate LOD variants.",
+    "Keep one-shot lifetime driven by particle age, not timeline time."
+  ],
+  "productionPipeline": {
+    "aeRender": {
+      "aepPath": null,
+      "compName": null,
+      "commandTemplate": null
+    },
+    "preview": {
+      "mp4": "Marketplace/preview.mp4",
+      "gif": "Marketplace/preview.gif"
+    },
+    "unityPackage": {
+      "targetPath": "MuzzleSparkBurst_Pro.unitypackage",
+      "exportMenuScript": "Assets/Editor/Export_MuzzleSparkBurst_Pro.cs"
+    },
+    "lodInputs": {
+      "high": null,
+      "medium": null,
+      "low": null
+    }
+  },
+  "marketplace": {
+    "heroFrame": "/Users/emirhan/Desktop/After_Effects_MCP/motionpilot-ae-mcp/examples/generated/action_game_vfx_pro_pack/MuzzleSparkBurst_Pro/Marketplace/MuzzleSparkBurst_Pro_hero.png",
+    "contactSheet": "/Users/emirhan/Desktop/After_Effects_MCP/motionpilot-ae-mcp/examples/generated/action_game_vfx_pro_pack/MuzzleSparkBurst_Pro/Marketplace/MuzzleSparkBurst_Pro_contact_sheet.png",
+    "previewGif": "/Users/emirhan/Desktop/After_Effects_MCP/motionpilot-ae-mcp/examples/generated/action_game_vfx_pro_pack/MuzzleSparkBurst_Pro/Marketplace/MuzzleSparkBurst_Pro_preview.gif"
+  }
+}
