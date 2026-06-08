@@ -1,16 +1,51 @@
 # motionpilot-ae-mcp
 
+**After Effects, meet an AI production crew that does not stop at one render.**
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/Remirdy/AfterEffectsMCP/main/assets/before-after.gif" alt="MotionPilot AE MCP before and after" width="760">
 </p>
 
-A **local MCP server** for analyzing **PSD** files and building animated
-**Adobe After Effects** projects, with saved `.aep` output and optional
-`.mp4`/`.mov` previews.
+MotionPilot is a **local MCP server** that turns creative direction into real
+motion-design work: PSD analysis, editable **Adobe After Effects** projects,
+procedural commercials, game VFX packs, Unity-ready flipbooks, render queues,
+voiceover/transcription helpers, campaign cutdowns, and a growing set of
+autonomous production loops.
+
+Give it a PSD, a brand brief, a VFX idea, or a full campaign prompt. It plans,
+builds, checks, packages, and keeps moving.
+
+## Why it is fun now
+
+- **AI stays in motion**: director loops, campaign factories, self-critique, trend radar, competitor watchdogs, and project state make it feel more like a tiny production floor than a single script.
+- **After Effects gets superpowers**: text-safe animation, camera parallax, procedural commercials, complex VFX recipes, premium-plugin replicas, raster plates, and batch AE actions.
+- **Game VFX gets a factory line**: sprite sheets, transparent frame sequences, Unity prefabs, VFX Graph / Shader Graph scaffolds, LOD variants, mobile budgets, preview media, and marketplace docs.
+- **Content teams get a launch kit**: brand kits, ad concepts, virality scoring, multiformat exports, podcast clipping, storyboard generation, game-trailer autopilot, and social cutdowns.
+- **Audio is part of the pipeline**: TTS, STT, lip sync, music planning, beat sync, sound design hooks, and waveform-aware motion tools.
+
+Think of it as: prompt in, production artifacts out. The source files stay safe,
+the outputs stay editable, and the AI keeps looking for the next useful move.
+
+## New feature map
+
+| Area | What MotionPilot can do |
+| --- | --- |
+| Autonomous studio | `motionpilot_director`, `auto_director_loop`, `prompt_to_campaign`, `self_critique_render`, `dream_mode`, `evolutionary_ad_swarm`, `competitor_watchdog`. |
+| Brand and ads | Brand-kit ingest, product-studio planning, ad concept generation, multiformat cutdowns, virality gates, A/B variant thinking. |
+| Content engines | Trend radar, voice brief, storyboard generator, podcast clipper, reference engineering, viral autopsy, game-trailer autopilot. |
+| Audio pipeline | Voiceover generation, transcription, lip-sync timing, emotion arcs, beat planning, music and sound-design helpers. |
+| AE generation | PSD import, procedural commercials, cinematic prompt packages, 3D/2.5D scenes, general AE action batches, JSX dry runs. |
+| VFX lab | Presets, complex recipes, raster plates, normal maps, simulation baking, Alembic bridge notes, premium-plugin-style replicas. |
+| Game engine exports | Unity / Unreal / Godot / Effekseer-oriented package manifests, flipbooks, prefabs, graph stubs, preview scenes, budget audits. |
+| Render ops | Proxy planning, render-farm queueing, delivery packaging, preview generation, thumbnail/contact-sheet creation. |
+
+The philosophy is simple: **do not make the human babysit every frame**. Let the
+AI do the boring loops, keep the artist in control, and leave the outputs in
+formats real production tools can open.
 
 ## Premium Unity VFX sample
 
-MotionPilot can also generate Unity-ready, asset-store-style VFX packages:
+MotionPilot can generate Unity-ready, asset-store-style VFX packages:
 transparent PNG frame sequences, flipbook sprite sheets, manifests, URP
 material/prefab scaffolds, VFX Graph / Shader Graph notes, marketplace preview
 media and documentation.
@@ -112,6 +147,63 @@ run by the AE binary (`aerender` for headless rendering when available).
 | `create_game_vfx_from_prompt` | Create game-ready VFX directly from a natural-language prompt. Infers effect type, color, intensity and format, then creates a standalone VFX `.aep` or applies the result to an existing project. |
 | `create_game_engine_vfx_package` | Create a Unity/Unreal-ready VFX package from a prompt: editable source `.aep`, manifest, sprite-sheet / PNG-sequence render targets, Unity import notes, Unreal/Niagara notes, and optional C4D/Cineware scene import when requested. |
 | `create_raster_vfx_plate` | Create high-quality raster/noise/particle-field PNG frame sequences for professional VFX plates. This is the preferred quality path for fire, portals, magic energy, shockwaves, sparks and other detailed game VFX. |
+
+### The always-on AI studio
+
+MotionPilot is no longer just "one prompt, one JSX file." It now has higher-level
+studio behaviors that can plan, branch, inspect, and package work:
+
+- **Director mode** keeps project state, moves through production steps, and can resume instead of starting over.
+- **Campaign factory** turns one hero brief into platform cutdowns, static post specs, publish calendars, and a campaign summary.
+- **Self-critique** grades outputs against the brief so the next pass has notes instead of vibes.
+- **Evolutionary swarm** treats creative variants like candidates: generate, score, keep the strongest, remix, repeat.
+- **Trend radar + competitor watchdog** help briefs feel current without hard-coding one style forever.
+- **Dream mode** is for speculative concepting: weird first, useful second, boring never.
+
+Try prompts like:
+
+```text
+Run the director for a premium vertical launch ad. Keep it energetic, readable,
+and ready for After Effects handoff.
+```
+
+```text
+Build a campaign factory output for a new AI motion-design tool: hero video,
+TikTok cutdowns, Instagram posts, YouTube pre-roll, and a 7-day publish calendar.
+```
+
+```text
+Generate three VFX directions for a cyberpunk spell impact, score them for game
+feel, then package the strongest one for Unity.
+```
+
+### New production toys
+
+| Toy | Use it when you want... |
+| --- | --- |
+| `build_3d_planet_generator` | A planet/globe scene with procedural atmosphere, lighting, and camera motion. |
+| `build_cyber_scan_overlay` | UI scanlines, HUD sweeps, targeting frames, and tech overlays. |
+| `build_dimensional_rift` | Portal/rift energy with layered distortion and glow. |
+| `build_cosmic_nebula_scene` | Spacey depth plates, color clouds, particles, and cinematic camera drift. |
+| `build_matrix_digital_rain` | Dense code-rain backgrounds and glitchy motion beds. |
+| `build_black_hole_gravity_warp` | Lens-warp, orbiting debris, and gravity-pull visuals. |
+| `build_lightning_storm_generator` | Branching lightning, flicker, storm light, and impact accents. |
+| `generate_vfx_normal_map_sequence` | Normal/distortion maps for flipbook VFX that need extra depth. |
+| `apply_pixel_art_filter` | Crunch motion graphics into a retro game look. |
+| `build_audio_beat_sync_controller` | Beat-aware markers and motion timing hooks. |
+
+### Premium-plugin-style replicas
+
+MotionPilot includes many native-AE replicas inspired by common premium motion
+workflows. If the real plugin is installed, some paths can lean into it. If not,
+MotionPilot still builds a stock-AE version that travels with the project.
+
+Examples include particle bursts, Saber-like neon strokes, Plexus-style meshes,
+light rays, optical flares, analog glitch, VHS damage, chromatic aberration,
+heatwave refraction, deep glow, motion blur, depth of field, planar tracking
+helpers, roto/paint helpers, volumetric rays, 3D stroke looks, film damage,
+title-studio-style builds, camera shake, object-removal notes, film emulation,
+and more.
 
 ### Asset-free commercial builder
 
@@ -424,7 +516,7 @@ Generated scripts include these ExtendScript helpers (`src/ae/jsxHelpers.ts`):
 cd motionpilot-ae-mcp
 npm install
 npm run build        # compiles TypeScript to dist/
-npm run ci           # typecheck + build, same checks used by GitHub Actions
+npm run ci           # local full check: typecheck + tests + build
 ```
 
 If `sharp` fails to install on your platform, see https://sharp.pixelplumbing.com/install.
@@ -593,6 +685,18 @@ src/
   schemas.ts            Zod input schemas
   types.ts              Shared domain types
   util.ts               Logging, fs guards, overwrite protection
+  agent/                Director loops, campaign factory, self-critique, swarm ideas
+  ad/                   Concepts, product studio, multiformat exports, virality scoring
+  ai/                   Image/video job bridge abstractions
+  animation/            Keyframe principles, rigs, camera choreography
+  audio/                TTS, STT, music, sound design, lip sync, emotion arcs
+  brand/                Brand-kit parsing and brand memory
+  content/              Trend radar, storyboards, podcast clips, reference engineering
+  data/                 Data-to-motion helpers
+  engine/               Unity/game-engine package writers
+  localization/         Copy/localization pack helpers
+  mcp/                  Connector utilities
+  orchestrator/         Project state and director workflow
   psd/
     roles.ts            Naming-pattern + role + animation detection
     analyzer.ts         PSD read, preview/thumbnail export, report
@@ -602,6 +706,12 @@ src/
     jsxHelpers.ts       Embedded ExtendScript helper library
     jsxGenerator.ts     Import / animate / render JSX generators
     runner.ts           Resolves & runs AE / aerender, parses results
+  qa/                   JSX dry-run validation
+  render/               Proxy, render farm, delivery packager
+  scale/                Personalized video helpers
+  telemetry/            Observer and scoring utilities
+  vfx/                  Presets, raster plates, simulation baking, Alembic notes
+tests/                  Vitest coverage for core modules
 examples/               Example JSON + prompts
 claude_desktop_config.example.json
 ```
