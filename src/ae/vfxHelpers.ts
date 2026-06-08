@@ -19,6 +19,54 @@ export const VFX_HELPERS = String.raw`
 var MPVFX = (function () {
   function log(m) { try { MP.log("[VFX] " + m); } catch (e) {} }
 
+  // -------- low-level control bindings ------------------------------------
+  function getOrAddControls(comp) {
+    var ctrl = null;
+    for (var i = 1; i <= comp.numLayers; i++) {
+      if (comp.layer(i).name === "[CONTROLS]") { ctrl = comp.layer(i); break; }
+    }
+    if (!ctrl) {
+      ctrl = comp.layers.addNull(comp.duration);
+      ctrl.name = "[CONTROLS]";
+      ctrl.label = 1; // Red
+      ctrl.moveToBeginning();
+      log("created [CONTROLS] null");
+    }
+    return ctrl;
+  }
+
+  function bindControlSlider(layer, prop, controlName, defaultVal) {
+    try {
+      var comp = layer.containingComp;
+      var ctrl = getOrAddControls(comp);
+      var fx = ctrl.property("ADBE Effect Parade").property(controlName);
+      if (!fx) {
+        fx = ctrl.property("ADBE Effect Parade").addProperty("ADBE Slider Control");
+        fx.name = controlName;
+        fx.property("Slider").setValue(defaultVal);
+      }
+      prop.expression = "thisComp.layer(\"[CONTROLS]\").effect(\"" + controlName + "\")(\"Slider\");";
+    } catch (e) {
+      log("bindSlider error: " + e.toString());
+    }
+  }
+
+  function bindControlColor(layer, prop, controlName, defaultVal) {
+    try {
+      var comp = layer.containingComp;
+      var ctrl = getOrAddControls(comp);
+      var fx = ctrl.property("ADBE Effect Parade").property(controlName);
+      if (!fx) {
+        fx = ctrl.property("ADBE Effect Parade").addProperty("ADBE Color Control");
+        fx.name = controlName;
+        fx.property("Color").setValue(defaultVal);
+      }
+      prop.expression = "thisComp.layer(\"[CONTROLS]\").effect(\"" + controlName + "\")(\"Color\");";
+    } catch (e) {
+      log("bindColor error: " + e.toString());
+    }
+  }
+
   // -------- low-level utilities -------------------------------------------
   function fxParade(layer) { return layer.property("ADBE Effect Parade"); }
 
@@ -516,6 +564,77 @@ var MPVFX = (function () {
     vig.property("ADBE Transform Group").property("ADBE Opacity").setValue(55);
     log("cinematicGrade built");
     return adj;
+  }
+
+  function layerNamed(comp, name) {
+    for (var i = 1; i <= comp.numLayers; i++) {
+      try { if (comp.layer(i).name === name) return comp.layer(i); } catch (e) {}
+    }
+    return null;
+  }
+
+  function topTextOrShapeLayer(comp) {
+    for (var i = 1; i <= comp.numLayers; i++) {
+      try {
+        var ly = comp.layer(i);
+        if (ly instanceof TextLayer || ly instanceof ShapeLayer) return ly;
+      } catch (e) {}
+    }
+    return null;
+  }
+
+  // Marketplace-quality finishing pass shared by generator tools. It is
+  // idempotent, so callers can run it right before saving without stacking
+  // duplicate grade/bloom layers.
+  function assetStorePolish(comp, opts) {
+    opts = opts || {};
+    var profile = opts.profile || "cinematic";
+    if (layerNamed(comp, "MP_ASSET_STORE_FINISH")) {
+      log("assetStorePolish skipped: finish already exists");
+      return comp;
+    }
+
+    enableMotionBlur(comp);
+    try { comp.shutterAngle = opts.shutterAngle || 180; } catch (e) {}
+    try { comp.resolutionFactor = [1, 1]; } catch (eRes) {}
+
+    var finish = comp.layers.addNull(comp.duration);
+    finish.name = "MP_ASSET_STORE_FINISH";
+    finish.enabled = false;
+    finish.shy = true;
+    try {
+      finish.property("ADBE Marker").setValueAtTime(0, new MarkerValue("Asset-store finish: motion blur, bloom, grade, grain, readability QC"));
+    } catch (eM) {}
+
+    var hero = opts.targetLayer ? MP.findLayersByPattern(comp, opts.targetLayer)[0] : null;
+    if (!hero) hero = topTextOrShapeLayer(comp);
+    if (hero) {
+      try { premiumGlow(comp, { targetLayer: hero.name, strength: opts.heroGlow || 52 }); } catch (eG) {}
+      if (opts.lightSweep !== false) {
+        try { lightSweep(comp, { targetLayer: hero.name, start: opts.sweepStart || 0.7, duration: opts.sweepDuration || 1.2 }); } catch (eS) {}
+      }
+    }
+
+    if (opts.bloom !== false) {
+      var bloomStrength = profile === "broadcast" ? 0.38 : profile === "social" ? 0.5 : profile === "game" ? 0.72 : 0.46;
+      cinematicBloom(comp, { strength: opts.bloomStrength || bloomStrength, radius: opts.bloomRadius || 80 });
+    }
+    if (opts.grade !== false) cinematicGrade(comp, { name: "MP_AssetStore_CinematicGrade" });
+    if (opts.grain !== false) filmGrain(comp, { name: "MP_AssetStore_FineGrain", strength: opts.grainStrength || 3 });
+
+    try {
+      var guide = comp.layers.addNull(comp.duration);
+      guide.name = "MP_QC_Readability_Markers";
+      guide.enabled = false;
+      guide.shy = true;
+      var mp = guide.property("ADBE Marker");
+      mp.setValueAtTime(0, new MarkerValue("QC: silhouette clear on black/white, peak frame readable, no text occlusion"));
+      mp.setValueAtTime(Math.max(0.1, comp.duration * 0.35), new MarkerValue("QC: primary action peak / thumbnail candidate"));
+      mp.setValueAtTime(Math.max(0.2, comp.duration * 0.82), new MarkerValue("QC: decay clean, alpha/edge-safe export"));
+    } catch (eQC) {}
+
+    log("assetStorePolish applied: " + profile);
+    return comp;
   }
 
   // ======================================================================
@@ -2243,6 +2362,119 @@ var MPVFX = (function () {
     return layer;
   }
 
+  // ── Procedural Shape Particles Altyapısı (Particular Geri Çekilme) ─────
+  function proceduralShapeParticles(comp, opts) {
+    opts = opts || {};
+    var t0 = opts.start || 0;
+    var dur = opts.duration || 1.5;
+    var c = centerOf(comp, opts);
+    var col = opts.color || [1, 0.5, 0.2];
+    var count = opts.count || 24;
+    var host = comp.layers.addShape();
+    host.name = opts.name || "Procedural Shape Particles";
+    host.startTime = t0;
+    host.property("ADBE Transform Group").property("ADBE Position").setValue(c);
+    setBlend(host, "ADD");
+    var root = host.property("ADBE Root Vectors Group");
+    for (var i = 0; i < count; i++) {
+      var grp = root.addProperty("ADBE Vector Group");
+      grp.name = "Particle_" + i;
+      var vec = grp.property("ADBE Vectors Group");
+      var el = vec.addProperty("ADBE Vector Shape - Ellipse");
+      el.property("ADBE Vector Ellipse Size").setValue([8 + Math.random() * 8, 8 + Math.random() * 8]);
+      var fill = vec.addProperty("ADBE Vector Graphic - Fill");
+      fill.property("ADBE Vector Fill Color").setValue(col);
+      var gt = grp.property("ADBE Vector Transform Group");
+      var rot = i * (360 / count) + (Math.random() - 0.5) * 30;
+      gt.property("ADBE Vector Rotation").setValue(rot);
+      var pos = gt.property("ADBE Vector Position");
+      var speed = 250 + Math.random() * 350;
+      var gravity = 220;
+      pos.setValueAtTime(0, [0, 0]);
+      pos.setValueAtTime(dur, [
+        Math.cos(rot * Math.PI / 180) * speed * dur,
+        Math.sin(rot * Math.PI / 180) * speed * dur + 0.5 * gravity * dur * dur
+      ]);
+      MP.setEase(pos, "expoOut");
+      var op = gt.property("ADBE Vector Opacity");
+      op.setValueAtTime(0, 100);
+      op.setValueAtTime(dur * 0.7, 100);
+      op.setValueAtTime(dur, 0);
+      MP.setEase(op, "quadOut");
+    }
+    var glow = addFx(host, "ADBE Glow");
+    if (glow) {
+      try {
+        glow.property("ADBE Glow-0003").setValue(50);
+        glow.property("ADBE Glow-0004").setValue(1.5);
+      } catch (e) {}
+    }
+    log("proceduralShapeParticles built");
+    return host;
+  }
+
+  // ── Procedural Plexus Altyapısı (Plexus Geri Çekilme) ──────────────────
+  function proceduralPlexus(comp, opts) {
+    opts = opts || {};
+    var t0 = opts.start || 0;
+    var dur = opts.duration || comp.duration;
+    var col = opts.color || [0.4, 0.7, 1];
+    var nodeCount = opts.nodes || 8;
+    var nodes = [];
+    for (var i = 0; i < nodeCount; i++) {
+      var n = comp.layers.addNull(dur);
+      n.name = "PlexusNode_" + i;
+      n.startTime = t0;
+      n.enabled = false;
+      n.shy = true;
+      var pos = n.property("ADBE Transform Group").property("ADBE Position");
+      pos.setValue([
+        comp.width * (0.2 + 0.6 * Math.random()),
+        comp.height * (0.2 + 0.6 * Math.random())
+      ]);
+      try { pos.expression = "wiggle(0.5, 200);"; } catch (e) {}
+      nodes.push(n);
+    }
+    var lines = comp.layers.addShape();
+    lines.name = opts.name || "Plexus Network";
+    lines.startTime = t0;
+    setBlend(lines, "ADD");
+    var root = lines.property("ADBE Root Vectors Group");
+    var edgeCount = 0;
+    for (var i = 0; i < nodeCount; i++) {
+      for (var j = i + 1; j < Math.min(nodeCount, i + 3); j++) {
+        var g = root.addProperty("ADBE Vector Group");
+        g.name = "Edge_" + edgeCount;
+        var vec = g.property("ADBE Vectors Group");
+        var shp = vec.addProperty("ADBE Vector Shape - Path");
+        var pathProp = shp.property("ADBE Vector Path");
+        try {
+          pathProp.expression =
+            "var p1 = thisComp.layer(\"PlexusNode_" + i + "\").transform.position;\n" +
+            "var p2 = thisComp.layer(\"PlexusNode_" + j + "\").transform.position;\n" +
+            "var shp = new Shape();\n" +
+            "shp.vertices = [p1 - transform.position, p2 - transform.position];\n" +
+            "shp.closed = false;\n" +
+            "shp;";
+        } catch(eExpr) {}
+        var stroke = vec.addProperty("ADBE Vector Graphic - Stroke");
+        stroke.property("ADBE Vector Stroke Color").setValue(col);
+        try {
+          stroke.property("ADBE Vector Stroke Width").expression =
+            "var p1 = thisComp.layer(\"PlexusNode_" + i + "\").transform.position;\n" +
+            "var p2 = thisComp.layer(\"PlexusNode_" + j + "\").transform.position;\n" +
+            "var d = length(p1 - p2);\n" +
+            "d < 250 ? ease(d, 0, 250, 2.5, 0) : 0;";
+        } catch(eStr) {}
+        edgeCount++;
+      }
+    }
+    var glow = addFx(lines, "ADBE Glow");
+    if (glow) { try { glow.property("ADBE Glow-0003").setValue(40); } catch (e) {} }
+    log("proceduralPlexus built with " + nodeCount + " nodes");
+    return lines;
+  }
+
   // ======================================================================
   // ★ ÇILGIN / CRAZY NATIVE IMPLEMENTATIONS ★
   // ======================================================================
@@ -3127,6 +3359,7 @@ var MPVFX = (function () {
     energyBeam: energyBeam,
     filmGrain: filmGrain,
     cinematicGrade: cinematicGrade,
+    assetStorePolish: assetStorePolish,
     glitch: glitch,
     rgbSplit: rgbSplit,
     neonGlow: neonGlow,
@@ -3201,6 +3434,463 @@ var MPVFX = (function () {
     noiseTunnel: noiseTunnel
   };
 
+  // ── GRAVITY WARP / LENSING ──
+  function gravityWarp(comp, opts) {
+    opts = opts || {};
+    var singularityCol = opts.singularityColor || [0.9, 0.45, 1.0];
+    var diskCol = opts.accretionDiskColor || [1.0, 0.55, 0.1];
+    var strength = opts.warpStrength != null ? opts.warpStrength : 85;
+    var dur = opts.duration || comp.duration;
+    var t0 = opts.start || 0;
+    var cw = comp.width; var ch = comp.height;
+
+    // 1. Accretion Disk (Swirling Fractal Noise)
+    var disk = solid(comp, [0,0,0], "MP_Accretion_Disk", dur);
+    disk.startTime = t0;
+    disk.blendingMode = BlendingMode.ADD;
+    var fnDisk = addFx(disk, "ADBE Fractal Noise");
+    if (fnDisk) {
+      try {
+        fnDisk.property("ADBE Fractal Noise-0002").setValue(4);
+        fnDisk.property("ADBE Fractal Noise-0003").setValue(1.8);
+        fnDisk.property("ADBE Fractal Noise-0005").setValue(130);
+        fnDisk.property("ADBE Fractal Noise-0013").setValue(160);
+        fnDisk.property("ADBE Fractal Noise-0017").expression = "time * 75;";
+      } catch(e) {}
+    }
+    var polar = addFx(disk, "ADBE Polar Coordinates");
+    if (polar) {
+      try {
+        polar.property("ADBE Polar Coordinates-0001").setValue(100);
+        polar.property("ADBE Polar Coordinates-0002").setValue(1);
+      } catch(e) {}
+    }
+    var tint = addFx(disk, "ADBE Tint");
+    if (tint) {
+      try { tint.property("ADBE Tint-0002").setValue(diskCol); } catch(e) {}
+    }
+    try {
+      disk.property("ADBE Transform Group").property("ADBE Scale").setValue([50, 20]);
+      disk.property("ADBE Transform Group").property("ADBE Rotate Z").setValue(-25);
+      disk.property("ADBE Transform Group").property("ADBE Position").setValue([cw/2, ch/2]);
+    } catch(e) {}
+
+    // 2. Singularity black hole core
+    var hole = comp.layers.addShape();
+    hole.name = "MP_Singularity_Core";
+    hole.startTime = t0;
+    var hRoot = hole.property("ADBE Root Vectors Group");
+    var hEll = hRoot.addProperty("ADBE Vector Shape - Ellipse");
+    var radius = Math.round(Math.min(cw, ch) * 0.12);
+    hEll.property("ADBE Vector Ellipse Size").setValue([radius * 2, radius * 2]);
+    var hFill = hRoot.addProperty("ADBE Vector Graphic - Fill");
+    hFill.property("ADBE Vector Fill Color").setValue([0, 0, 0, 1]);
+    hole.property("ADBE Transform Group").property("ADBE Position").setValue([cw/2, ch/2]);
+
+    var corona = comp.layers.addShape();
+    corona.name = "MP_Singularity_Corona";
+    corona.startTime = t0;
+    corona.blendingMode = BlendingMode.ADD;
+    var cRoot = corona.property("ADBE Root Vectors Group");
+    var cEll = cRoot.addProperty("ADBE Vector Shape - Ellipse");
+    cEll.property("ADBE Vector Ellipse Size").setValue([radius * 2 + 10, radius * 2 + 10]);
+    var cStroke = cRoot.addProperty("ADBE Vector Graphic - Stroke");
+    cStroke.property("ADBE Vector Stroke Color").setValue(singularityCol);
+    cStroke.property("ADBE Vector Stroke Width").setValue(12);
+    corona.property("ADBE Transform Group").property("ADBE Position").setValue([cw/2, ch/2]);
+    var cGlow = addFx(corona, "ADBE Glow");
+    if (cGlow) {
+      try { cGlow.property("ADBE Glow-0003").setValue(50); cGlow.property("ADBE Glow-0004").setValue(2.2); } catch(e) {}
+    }
+
+    // 3. Displacement map radial gradient map precomp
+    var mapComp = app.project.items.addComp("Displacement_Ramp_Map_" + Math.floor(Math.random()*1000), cw, ch, 1, dur, comp.frameRate);
+    var mapSolid = mapComp.layers.addSolid([0.5, 0.5, 0.5], "Ramp", cw, ch, 1, dur);
+    var ramp = addFx(mapSolid, "ADBE Ramp");
+    if (ramp) {
+      try {
+        ramp.property("ADBE Ramp-0001").setValue([cw/2, ch/2]);
+        ramp.property("ADBE Ramp-0002").setValue([1, 1, 1]);
+        ramp.property("ADBE Ramp-0003").setValue([cw/2 + radius * 2, ch/2]);
+        ramp.property("ADBE Ramp-0004").setValue([0.5, 0.5, 0.5]);
+        ramp.property("ADBE Ramp-0005").setValue(2);
+      } catch(e) {}
+    }
+    var mapLayer = comp.layers.addComp(mapComp);
+    mapLayer.name = "MP_Gravity_Warp_Map";
+    mapLayer.startTime = t0;
+    mapLayer.enabled = false;
+
+    // Displacement adjustment layer
+    var adj = adjustment(comp, "MP_Gravity_Warp_Adjustment");
+    adj.startTime = t0;
+    adj.moveToBeginning();
+    var disp = addFx(adj, "ADBE Displacement Map");
+    if (disp) {
+      try {
+        disp.property("Displacement Map Layer").setValue(mapLayer.index);
+        disp.property("Horizontal Use For").setValue(1);
+        disp.property("Vertical Use For").setValue(2);
+        disp.property("Max Horizontal Displacement").setValue(strength);
+        disp.property("Max Vertical Displacement").setValue(strength);
+      } catch(e) {}
+    }
+    log("gravityWarp built");
+    return adj;
+  }
+
+  // ── LIQUID LAVA SIMULATOR ──
+  function liquidLava(comp, opts) {
+    opts = opts || {};
+    var lavaCol = opts.lavaColor || [1.0, 0.25, 0.0];
+    var count = opts.blobCount || 12;
+    var dur = opts.duration || comp.duration;
+    var t0 = opts.start || 0;
+    var cw = comp.width; var ch = comp.height;
+
+    var host = comp.layers.addShape();
+    host.name = "MP_Liquid_Lava_Host";
+    host.startTime = t0;
+    host.property("ADBE Transform Group").property("ADBE Position").setValue([cw/2, ch/2]);
+    setBlend(host, "NORMAL");
+
+    var root = host.property("ADBE Root Vectors Group");
+    for (var i = 0; i < count; i++) {
+      var grp = root.addProperty("ADBE Vector Group");
+      grp.name = "Blob_" + i;
+      var vecs = grp.property("ADBE Vectors Group");
+      var ell = vecs.addProperty("ADBE Vector Shape - Ellipse");
+      var rad = 60 + Math.random() * 80;
+      ell.property("ADBE Vector Ellipse Size").setValue([rad * 2, rad * 2]);
+      var fill = vecs.addProperty("ADBE Vector Graphic - Fill");
+      fill.property("ADBE Vector Fill Color").setValue(lavaCol);
+
+      var trans = grp.property("ADBE Vector Transform Group");
+      var pos = trans.property("ADBE Vector Position");
+      pos.setValue([(Math.random() - 0.5) * cw * 0.6, (Math.random() - 0.5) * ch * 0.6]);
+      try { pos.expression = "wiggle(0.4, 280);"; } catch(e) {}
+    }
+
+    var blur = addFx(host, "ADBE Fast Box Blur");
+    if (blur) {
+      try {
+        blur.property("Blur Radius").setValue(65);
+        blur.property("Blur Dimensions").setValue(1);
+        blur.property("Repeat Edge Pixels").setValue(1);
+      } catch(e) {}
+    }
+    var choker = addFx(host, "ADBE Simple Choker");
+    if (choker) {
+      try { choker.property("Choke Matte").setValue(42); } catch(e) {}
+    }
+    var glow = addFx(host, "ADBE Glow");
+    if (glow) {
+      try {
+        glow.property("ADBE Glow-0002").setValue(15);
+        glow.property("ADBE Glow-0003").setValue(90);
+        glow.property("ADBE Glow-0004").setValue(2.0);
+      } catch(e) {}
+    }
+    log("liquidLava built");
+    return host;
+  }
+
+  // ── LIGHTNING STORM GENERATOR ──
+  function lightningStorm(comp, opts) {
+    opts = opts || {};
+    var glowCol = opts.glowColor || [0.3, 0.75, 1.0];
+    var freq = opts.boltFrequency || 2;
+    var addRain = opts.addRain !== false;
+    var dur = opts.duration || comp.duration;
+    var t0 = opts.start || 0;
+    var cw = comp.width; var ch = comp.height;
+
+    // Clouds
+    var clouds = solid(comp, [0.1, 0.1, 0.15], "MP_Storm_Clouds", dur);
+    clouds.startTime = t0;
+    clouds.blendingMode = BlendingMode.MULTIPLY;
+    try { clouds.property("ADBE Transform Group").property("ADBE Opacity").setValue(75); } catch(e){}
+    var fn = addFx(clouds, "ADBE Fractal Noise");
+    if (fn) {
+      try {
+        fn.property("ADBE Fractal Noise-0003").setValue(1.6);
+        fn.property("ADBE Fractal Noise-0004").setValue(55);
+        fn.property("ADBE Fractal Noise-0013").setValue(380);
+        fn.property("ADBE Fractal Noise-0017").expression = "time * 6;";
+      } catch(e) {}
+    }
+
+    // Ambient flash
+    var flash = solid(comp, [0.8, 0.9, 1.0], "MP_Ambient_Flash", dur);
+    flash.startTime = t0;
+    flash.blendingMode = BlendingMode.ADD;
+    var op = flash.property("ADBE Transform Group").property("ADBE Opacity");
+    if (op) {
+      try {
+        op.expression =
+          "seedRandom(Math.floor(time * " + freq + "), false);\n" +
+          "var trigger = random(0, 100);\n" +
+          "if (trigger > 90) {\n" +
+          "  var age = time % (1 / " + freq + ");\n" +
+          "  var dec = Math.exp(-age * 22);\n" +
+          "  dec * random(30, 85);\n" +
+          "} else { 0; }\n";
+      } catch(e) {}
+    }
+
+    // Advanced lightning bolt
+    var bolt = solid(comp, [0,0,0], "MP_Lightning_Strike", dur);
+    bolt.startTime = t0;
+    bolt.blendingMode = BlendingMode.ADD;
+    var lt = addFx(bolt, "ADBE Advanced Lightning");
+    if (lt) {
+      try {
+        lt.property("Lightning Type").setValue(1);
+        lt.property("Origin").setValue([cw/2, 0]);
+        lt.property("Direction").expression =
+          "seedRandom(Math.floor(time * " + freq + "), true);\n" +
+          "[random(thisComp.width*0.2, thisComp.width*0.8), thisComp.height * random(0.6, 0.95)];";
+        lt.property("State/Conduction").expression = "time * 16;";
+        lt.property("Glow Color").setValue(glowCol);
+        lt.property("Core Color").setValue([1,1,1]);
+        var bOp = bolt.property("ADBE Transform Group").property("ADBE Opacity");
+        if (bOp) bOp.expression = "thisComp.layer(\"MP_Ambient_Flash\").transform.opacity * 1.5;";
+      } catch(e) {}
+    }
+
+    // Rain
+    if (addRain) {
+      var rain = solid(comp, [0,0,0], "MP_Storm_Rain", dur);
+      rain.startTime = t0;
+      rain.blendingMode = BlendingMode.ADD;
+      var ccRain = addFx(rain, "CC Rainfall");
+      if (ccRain) {
+        try {
+          ccRain.property("Drops").setValue(2500);
+          ccRain.property("Size").setValue(2);
+          ccRain.property("Speed").setValue(4500);
+          ccRain.property("Wind").setValue(15);
+          ccRain.property("Color").setValue([0.75, 0.85, 0.95, 0.25]);
+        } catch(e) {}
+      }
+    }
+    log("lightningStorm built");
+    return flash;
+  }
+
+  // ── MAGIC SUMMONING SIGIL ──
+  function magicSigil(comp, opts) {
+    opts = opts || {};
+    var col = opts.glowColor || [0.6, 0.3, 1.0];
+    var txt = opts.runeText || "ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ";
+    var drawDur = opts.drawDuration || 2.5;
+    var dur = opts.duration || comp.duration;
+    var t0 = opts.start || 0;
+    var cw = comp.width; var ch = comp.height;
+
+    // 3D parent controller null
+    var ctrl = comp.layers.addNull(dur);
+    ctrl.name = "MP_Sigil_Controller";
+    ctrl.startTime = t0;
+    try {
+      ctrl.threeDLayer = true;
+      ctrl.property("ADBE Transform Group").property("ADBE Position").setValue([cw/2, ch/2, 0]);
+      ctrl.property("ADBE Transform Group").property("ADBE Rotate X").setValue(72);
+    } catch(e) {}
+
+    // Sigil shapes
+    var sigil = comp.layers.addShape();
+    sigil.name = "MP_Sigil_Rings";
+    sigil.startTime = t0;
+    try {
+      sigil.threeDLayer = true;
+      sigil.parent = ctrl;
+      sigil.property("ADBE Transform Group").property("ADBE Position").setValue([0,0,0]);
+    } catch(e) {}
+    sigil.blendingMode = BlendingMode.ADD;
+
+    var root = sigil.property("ADBE Root Vectors Group");
+
+    // concentric rings
+    var ringSizes = [580, 510, 410];
+    var ringRots = ["time * 25;", "time * -35;", "time * 45;"];
+    for (var r = 0; r < 3; r++) {
+      var grp = root.addProperty("ADBE Vector Group");
+      grp.name = "Ring_" + r;
+      var vecs = grp.property("ADBE Vectors Group");
+      var ell = vecs.addProperty("ADBE Vector Shape - Ellipse");
+      ell.property("ADBE Vector Ellipse Size").setValue([ringSizes[r], ringSizes[r]]);
+      var stroke = vecs.addProperty("ADBE Vector Graphic - Stroke");
+      stroke.property("ADBE Vector Stroke Color").setValue(col);
+      stroke.property("ADBE Vector Stroke Width").setValue(r === 1 ? 1.5 : 3);
+      if (r === 2) {
+        var dashes = stroke.property("Dashes");
+        if (dashes) {
+          try {
+            var d = dashes.addProperty("ADBE Vector Stroke Dash 1"); d.setValue(12);
+            var g = dashes.addProperty("ADBE Vector Stroke Gap 1"); g.setValue(8);
+          } catch(e) {}
+        }
+      }
+      try {
+        grp.property("ADBE Vector Transform Group").property("ADBE Vector Rotation").expression = ringRots[r];
+      } catch(e) {}
+    }
+
+    var trim = root.addProperty("ADBE Vector Filter - Trim");
+    if (trim) {
+      try {
+        var trimEnd = trim.property("ADBE Vector Trim End");
+        trimEnd.setValueAtTime(t0, 0);
+        trimEnd.setValueAtTime(t0 + drawDur, 100);
+        MP.setEase(trimEnd, "expoOut");
+      } catch(e) {}
+    }
+
+    var glow = addFx(sigil, "ADBE Glow");
+    if (glow) {
+      try { glow.property("ADBE Glow-0003").setValue(45); glow.property("ADBE Glow-0004").setValue(2.0); } catch(e) {}
+    }
+
+    // Runes text
+    var runes = comp.layers.addText(txt);
+    runes.name = "MP_Sigil_Runes";
+    runes.startTime = t0;
+    try {
+      runes.threeDLayer = true;
+      runes.parent = ctrl;
+      runes.property("ADBE Transform Group").property("ADBE Position").setValue([0,0,0]);
+    } catch(e) {}
+    runes.blendingMode = BlendingMode.ADD;
+
+    try {
+      var tProp = runes.property("ADBE Text Properties").property("ADBE Text Document");
+      var td = tProp.value;
+      td.fontSize = 24;
+      td.fillColor = col;
+      td.justification = ParagraphJustification.CENTER_JUSTIFY;
+      tProp.setValue(td);
+    } catch(e) {}
+
+    var rot = runes.property("ADBE Transform Group").property("ADBE Rotate Z");
+    if (rot) rot.expression = "time * -15;";
+    var opRunes = runes.property("ADBE Transform Group").property("ADBE Opacity");
+    if (opRunes) {
+      opRunes.setValueAtTime(t0, 0);
+      opRunes.setValueAtTime(t0 + drawDur * 0.4, 0);
+      opRunes.setValueAtTime(t0 + drawDur, 100);
+      MP.setEase(opRunes, "quadOut");
+    }
+
+    var sc = ctrl.property("ADBE Transform Group").property("ADBE Scale");
+    if (sc) {
+      sc.setValueAtTime(t0, [0, 0, 100]);
+      sc.setValueAtTime(t0 + drawDur * 0.5, [75, 75, 100]);
+      sc.setValueAtTime(t0 + drawDur, [100, 100, 100]);
+      sc.setValueAtTime(t0 + drawDur + 0.1, [112, 112, 100]);
+      sc.setValueAtTime(t0 + drawDur + 0.5, [100, 100, 100]);
+      MP.setEase(sc, "expoOut");
+    }
+    log("magicSigil built");
+    return ctrl;
+  }
+
+  var REGISTRY = {
+    energyBurst: energyBurst,
+    shapeBurst: shapeBurst,
+    shockwave: shockwave,
+    magicCircle: magicCircle,
+    powerAura: powerAura,
+    hitSpark: hitSpark,
+    atmosphericFog: atmosphericFog,
+    lightRays: lightRays,
+    lensFlare: lensFlare,
+    fireSmoke: fireSmoke,
+    energyBeam: energyBeam,
+    filmGrain: filmGrain,
+    cinematicGrade: cinematicGrade,
+    assetStorePolish: assetStorePolish,
+    glitch: glitch,
+    rgbSplit: rgbSplit,
+    neonGlow: neonGlow,
+    whipPan: whipPan,
+    kineticPop: kineticPop,
+    // advanced / complex primitives
+    lightningBolt: lightningBolt,
+    portal: portal,
+    forceField: forceField,
+    disintegrate: disintegrate,
+    swordSlash: swordSlash,
+    speedLines: speedLines,
+    chargeUp: chargeUp,
+    muzzleFlash: muzzleFlash,
+    hologram: hologram,
+    rainStorm: rainStorm,
+    snowFall: snowFall,
+    waterRipple: waterRipple,
+    plexusNetwork: plexusNetwork,
+    bokeh: bokeh,
+    confetti: confetti,
+    lightLeak: lightLeak,
+    lightSweep: lightSweep,
+    premiumGlow: premiumGlow,
+    enableMotionBlur: function (comp, opts) { return enableMotionBlur(comp); },
+    // ── Premium plugin replicas ──
+    trapcodeShine: trapcodeShine,
+    trapcodeStarglow: trapcodeStarglow,
+    "trapcodeМir": trapcodeМir,
+    opticalFlaresHero: opticalFlaresHero,
+    saberEnergySlash: saberEnergySlash,
+    saberPortal: saberPortal,
+    element3dObject: element3dObject,
+    element3dProductSpin: element3dProductSpin,
+    particularStormCloud: particularStormCloud,
+    particularFairyDust: particularFairyDust,
+    // ── Wave 3: New cinema effects ──
+    cinematicBloom: cinematicBloom,
+    depthOfField: depthOfField,
+    lensDistortion: lensDistortion,
+    inkReveal: inkReveal,
+    paintStrokeReveal: paintStrokeReveal,
+    // ── Wave 3: New game effects ──
+    spawnEffect: spawnEffect,
+    healAura: healAura,
+    deathDissolve: deathDissolve,
+    freezeEffect: freezeEffect,
+    // ── Wave 3: New social/ad effects ──
+    bounceIn: bounceIn,
+    slideTransition: slideTransition,
+    stickerPop: stickerPop,
+    zoomTransition: zoomTransition,
+    productShine360: productShine360,
+    glassMorphism: glassMorphism,
+    smokeTitleReveal: smokeTitleReveal,
+    glitchLogoReveal: glitchLogoReveal,
+    // ── Crazy / AE-native original effects ──
+    digitalRain: digitalRain,
+    pixelSort: pixelSort,
+    liquidFill: liquidFill,
+    fractalZoom: fractalZoom,
+    holographicHud: holographicHud,
+    asciiArt: asciiArt,
+    thermalCam: thermalCam,
+    clothWave: clothWave,
+    watercolorPaint: watercolorPaint,
+    databend: databend,
+    vhsRetro: vhsRetro,
+    kaleidoscope: kaleidoscope,
+    synthwaveGrid: synthwaveGrid,
+    duotone: duotone,
+    noiseTunnel: noiseTunnel,
+    proceduralShapeParticles: proceduralShapeParticles,
+    proceduralPlexus: proceduralPlexus,
+    // ── Wave 4: Ultimate VFX ──
+    gravityWarp: gravityWarp,
+    liquidLava: liquidLava,
+    lightningStorm: lightningStorm,
+    magicSigil: magicSigil
+  };
+
   function run(comp, fnName, opts) {
     var fn = REGISTRY[fnName];
     if (!fn) throw new Error("Unknown VFX function: " + fnName);
@@ -3273,6 +3963,9 @@ var MPVFX = (function () {
       { fn: "lightSweep", opts: { start: 1.1, duration: 1.5 } },
       { fn: "cinematicGrade", opts: {} },
       { fn: "filmGrain", opts: { strength: 6 } }
+    ],
+    assetStorePolish: [
+      { fn: "assetStorePolish", opts: { profile: "cinematic" } }
     ],
     // Premium product / hero reveal: depth bokeh + light rays + sweep + grade.
     premiumReveal: [

@@ -282,6 +282,123 @@ var MP = (function () {
     return "null";
   }
 
+  // Safely get or add an effect on a layer using matchName (language-independent)
+  function getOrAddEffect(layer, effectMatchName) {
+    var fx = layer.property("ADBE Effect Parade") ||
+             layer.property("Effects") ||
+             layer.property("Efekt") ||
+             layer.property("Effekt");
+    if (!fx) return null;
+
+    // Check if it already exists
+    for (var i = 1; i <= fx.numProperties; i++) {
+      if (fx.property(i).matchName === effectMatchName) {
+        return fx.property(i);
+      }
+    }
+
+    // If not, add it
+    try {
+      return fx.addProperty(effectMatchName);
+    } catch (e) {
+      log("Failed to add effect matchName " + effectMatchName + ": " + e.toString());
+    }
+    return null;
+  }
+
+  // Safely set an effect property value by its 1-indexed position (language-independent)
+  function setEffectValue(effect, propIndex, value) {
+    if (!effect) return false;
+    try {
+      var prop = effect.property(propIndex);
+      if (prop) {
+        prop.setValue(value);
+        return true;
+      }
+    } catch (e) {
+      log("Failed to set effect property index " + propIndex + ": " + e.toString());
+    }
+    return false;
+  }
+
+  // Set custom cubic-bezier easing curves on keyframes (speed, influence)
+  function setCustomBezierEase(prop, inSpeed, inInfluence, outSpeed, outInfluence) {
+    var n = prop.numKeys;
+    var dim = prop.value instanceof Array ? prop.value.length : 1;
+    for (var i = 1; i <= n; i++) {
+      try {
+        var ei = new KeyframeEase(inSpeed, inInfluence);
+        var eo = new KeyframeEase(outSpeed, outInfluence);
+        prop.setInterpolationTypeAtKey(i, KeyframeInterpolationType.BEZIER, KeyframeInterpolationType.BEZIER);
+        if (prop.propertyValueType === PropertyValueType.TwoD_SPATIAL || prop.propertyValueType === PropertyValueType.ThreeD_SPATIAL) {
+          prop.setTemporalEaseAtKey(i, [ei, ei, ei], [eo, eo, eo]);
+        } else if (prop.value instanceof Array && prop.value.length === 3) {
+          prop.setTemporalEaseAtKey(i, [ei, ei, ei], [eo, eo, eo]);
+        } else if (prop.value instanceof Array && prop.value.length === 2) {
+          prop.setTemporalEaseAtKey(i, [ei, ei], [eo, eo]);
+        } else {
+          prop.setTemporalEaseAtKey(i, [ei], [eo]);
+        }
+      } catch (e) {
+        log("Failed to apply custom ease on " + prop.name + " key " + i);
+      }
+    }
+  }
+
+  // Add an elegant text range animator for character-level fade/scale/slide
+  function addTextCharacterAnimator(layer, animName, t0, dur, properties, easeName) {
+    try {
+      var animators = layer.property("ADBE Text Properties").property("ADBE Text Animators");
+      var anim = animators.addProperty("ADBE Text Animator");
+      anim.name = animName || "MP Character Animator";
+
+      var sel = anim.property("ADBE Text Selectors").addProperty("ADBE Text Selector");
+      var props = anim.property("ADBE Text Animator Properties");
+
+      if (properties.opacity !== undefined) {
+        props.addProperty("ADBE Text Opacity").setValue(properties.opacity);
+      }
+      if (properties.scale !== undefined) {
+        props.addProperty("ADBE Text Scale").setValue([properties.scale, properties.scale]);
+      }
+      if (properties.position !== undefined) {
+        props.addProperty("ADBE Text Position").setValue(properties.position);
+      }
+
+      var startSel = sel.property("ADBE Text Percent Start");
+      startSel.setValueAtTime(t0, 0);
+      startSel.setValueAtTime(t0 + dur, 100);
+      setEase(startSel, easeName || "quadOut");
+      log("Added character text animator to: " + layer.name);
+    } catch (e) {
+      log("Failed to add text character animator: " + e.toString());
+    }
+  }
+
+  // Apply Lumetri Color LUT to a layer (e.g. adjustment layer)
+  function applyLUT(layer, lutPath) {
+    var fx = getOrAddEffect(layer, "Adobe Lumetri Color");
+    if (!fx) {
+      fx = getOrAddEffect(layer, "Lumetri Color");
+    }
+    if (fx) {
+      try {
+        var basic = fx.property("ADBE Lumetri Color-0001") || fx.property(1);
+        if (basic) {
+          var inputLut = basic.property("ADBE Lumetri Color-0002") || basic.property(3);
+          if (inputLut) {
+            inputLut.setValue(lutPath);
+            log("Applied LUT " + lutPath + " to layer: " + layer.name);
+            return true;
+          }
+        }
+      } catch (e) {
+        log("Failed to apply LUT path to Lumetri Color: " + e.toString());
+      }
+    }
+    return false;
+  }
+
   return {
     log: log, getLog: function () { return LOG.join("\n"); },
     setEase: setEase,
@@ -301,7 +418,12 @@ var MP = (function () {
     protectTextLayer: protectTextLayer,
     saveProject: saveProject,
     toJson: toJson,
-    getPos: getPos
+    getPos: getPos,
+    getOrAddEffect: getOrAddEffect,
+    setEffectValue: setEffectValue,
+    setCustomBezierEase: setCustomBezierEase,
+    addTextCharacterAnimator: addTextCharacterAnimator,
+    applyLUT: applyLUT
   };
 })();
 `;

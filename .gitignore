@@ -9,13 +9,32 @@ claude_desktop_config.json
 # Generated analysis/render/project outputs
 work/
 work_preview.png
+tests_temp_*/
+tmp/
+temp/
+coverage/
 *.aep
 *.mp4
 *.mov
 
+# Generated local experiments and inspection output
+examples/generated/*.jsx
+examples/generated/*_result.txt
+examples/generated/*_inspect.txt
+examples/generated/*_preview.png
+examples/generated/ae_smoke.txt
+examples/generated/**/*.png
+examples/generated/**/*.gif
+
 # Local scratch scripts
 _*.mjs
+extract_points.js
+generate_jsx.js
 
 # Environment files
 .env
 .env.*
+
+# This project uses npm/package-lock for CI.
+pnpm-lock.yaml
+pnpm-workspace.yaml

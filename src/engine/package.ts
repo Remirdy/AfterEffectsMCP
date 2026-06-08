@@ -346,6 +346,20 @@ export async function writeEnginePackage(opts: EnginePackageOptions): Promise<En
   if (engine === "unity" || engine === "both") {
     manifest.files.unityNotes = path.join(docsDir, "unity-import-notes.md");
     await fs.writeFile(manifest.files.unityNotes, unityNotes(manifest), "utf8");
+
+    // Write Shader Graph and HLSL stubs
+    const shadersDir = path.join(opts.outputFolder, "shaders");
+    await fs.mkdir(shadersDir, { recursive: true });
+
+    const hlslPath = path.join(shadersDir, "MotionPilot_URP_VFX.hlsl");
+    const sgPath = path.join(shadersDir, "MotionPilot_URP_VFX.shadergraph");
+
+    await fs.writeFile(hlslPath, unityShaderHlsl(), "utf8");
+    await fs.writeFile(sgPath, unityShaderGraphStub(), "utf8");
+
+    // Dynamic type casting to allow new custom properties
+    (manifest.files as any).unityHlslShader = hlslPath;
+    (manifest.files as any).unityShaderGraph = sgPath;
   }
   if (engine === "unreal" || engine === "both") {
     manifest.files.unrealNotes = path.join(docsDir, "unreal-niagara-notes.md");
@@ -355,4 +369,74 @@ export async function writeEnginePackage(opts: EnginePackageOptions): Promise<En
   await fs.writeFile(manifest.files.renderScript, renderScript(manifest), "utf8");
   await fs.writeFile(manifestPath, JSON.stringify(manifest, null, 2), "utf8");
   return manifest;
+}
+
+function unityShaderHlsl(): string {
+  return `// MotionPilot URP Game VFX Custom Shader Helper
+// Suitable for custom functions in Unity Shader Graph
+
+void MotionPilotVFX_FlipbookBlend_float(
+    UnityTexture2D SpriteSheet,
+    float2 UV,
+    float FrameIndex,
+    float Columns,
+    float Rows,
+    float FlipbookBlend, // 0 to 1 blend between frames
+    float4 ColorTint,
+    float EmissiveIntensity,
+    float DissolveAmount, // 0 (none) to 1 (fully dissolved)
+    out float4 OutColor,
+    out float3 OutEmissive
+) {
+    float2 cellSize = float2(1.0 / Columns, 1.0 / Rows);
+
+    // Current frame coordinates
+    float currentFrame = floor(FrameIndex);
+    float col1 = fmod(currentFrame, Columns);
+    float row1 = floor(currentFrame / Columns);
+    float2 uv1 = UV * cellSize + float2(col1 * cellSize.x, (Rows - 1.0 - row1) * cellSize.y);
+
+    // Next frame coordinates for blending
+    float nextFrame = fmod(currentFrame + 1.0, Columns * Rows);
+    float col2 = fmod(nextFrame, Columns);
+    float row2 = floor(nextFrame / Columns);
+    float2 uv2 = UV * cellSize + float2(col2 * cellSize.x, (Rows - 1.0 - row2) * cellSize.y);
+
+    // Sample textures
+    float4 tex1 = SAMPLE_TEXTURE2D(SpriteSheet.tex, SpriteSheet.samplerTex, uv1);
+    float4 tex2 = SAMPLE_TEXTURE2D(SpriteSheet.tex, SpriteSheet.samplerTex, uv2);
+
+    // Blend frames
+    float4 finalTex = lerp(tex1, tex2, FlipbookBlend);
+
+    // Dissolve logic based on red channel of texture
+    float dissolveMask = finalTex.r;
+    float alpha = finalTex.a * step(DissolveAmount, dissolveMask);
+
+    OutColor = finalTex * ColorTint;
+    OutColor.a *= alpha;
+    OutEmissive = OutColor.rgb * EmissiveIntensity;
+}
+`;
+}
+
+function unityShaderGraphStub(): string {
+  return `{
+  "m_SGVersion": 12,
+  "m_Type": "ShaderGraph",
+  "m_ObjectId": "motionpilot-vfx-shader-graph-stub",
+  "m_Properties": [
+    { "m_Name": "SpriteSheet", "m_Type": "Texture2D" },
+    { "m_Name": "FrameIndex", "m_Type": "Vector1" },
+    { "m_Name": "Columns", "m_Type": "Vector1" },
+    { "m_Name": "Rows", "m_Type": "Vector1" },
+    { "m_Name": "ColorTint", "m_Type": "Color" },
+    { "m_Name": "EmissiveIntensity", "m_Type": "Vector1" },
+    { "m_Name": "DissolveAmount", "m_Type": "Vector1" }
+  ],
+  "m_Nodes": [
+    { "m_Type": "CustomFunctionNode", "m_FunctionName": "MotionPilotVFX_FlipbookBlend", "m_Source": "MotionPilot_URP_VFX.hlsl" }
+  ],
+  "m_Notes": "MotionPilot procedurally scaffolded Shader Graph placeholder. Import the matching .hlsl into Unity and bind properties to the Custom Function node."
+}`;
 }

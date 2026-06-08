@@ -1114,6 +1114,159 @@ export const buildProductMockupSceneSchema = {
   approveOverwrite: z.boolean().default(false),
 };
 
+// ======================================================================
+// ★ NEW LEGENDARY TOOLS SCHEMAS ★
+// ======================================================================
+
+export const build3dPlanetGeneratorSchema = {
+  outputAepPath: z.string().describe("Path of the generated procedural planet AEP project."),
+  color: z.array(z.number()).length(3).default([0.3, 0.6, 1]).describe("Primary planet glow RGB color 0..1."),
+  ringColor: z.array(z.number()).length(3).default([0.8, 0.7, 0.9]).describe("Planet ring RGB color 0..1."),
+  addRings: z.boolean().default(true).describe("Include planetary rings."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(10),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_3D_Planet"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildCyberScanOverlaySchema = {
+  outputAepPath: z.string().describe("Path of the generated cyber scan AEP project."),
+  targetLayer: z.string().default("Target_Layer").describe("Target layer name or wildcard prefix to overlay scanner HUD components on."),
+  color: z.array(z.number()).length(3).default([0.1, 0.9, 1]).describe("Laser/HUD neon RGB color 0..1."),
+  scanSpeed: z.number().positive().default(1.2).describe("Laser sweeping speed multiplier."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(8),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Cyber_Scan"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildDimensionalRiftSchema = {
+  outputAepPath: z.string().describe("Path of the generated dimensional crack AEP project."),
+  color: z.array(z.number()).length(3).default([0.6, 0.2, 1]).describe("Rift inner energy discharge color RGB 0..1."),
+  riftWidth: z.number().positive().default(350).describe("Scale width of the screen tear/crack."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(8),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Dimensional_Rift"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const generateVfxNormalMapSequenceSchema = {
+  diffuseFramesFolder: z.string().describe("Path to the input folder containing PNG diffuse frame sequences."),
+  outputNormalFolder: z.string().describe("Target folder where computed Sobel normal map PNG frames are written."),
+  strength: z.number().positive().default(2.5).describe("Height bump multiplier/Sobel gradient scaling factor."),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildCosmicNebulaSceneSchema = {
+  outputAepPath: z.string().describe("Path of the generated volumetric nebula AEP project."),
+  color: z.array(z.number()).length(3).default([0.8, 0.3, 1]).describe("Primary nebula dust RGB color 0..1."),
+  blackHole: z.boolean().default(true).describe("Include singularity black hole core and accretion disk."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(12),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Cosmic_Nebula"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildAudioBeatSyncControllerSchema = {
+  outputAepPath: z.string().describe("Path of the target AEP project to write/save."),
+  audioLayerName: z.string().default("Audio").describe("Layer name of the audio track file in the AEP project."),
+  style: z.enum(["scale-glow", "particles-bounce"]).default("scale-glow"),
+  sensitivity: z.number().positive().default(1.5).describe("Amplitude scale peak multiplier."),
+  addGlow: z.boolean().default(true).describe("Flicker/pulse layer glows dynamically based on beat."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(10),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Audio_Sync"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const applyPixelArtFilterSchema = {
+  outputAepPath: z.string().describe("Path of the pixel filter AEP project."),
+  targetLayer: z.string().optional().describe("Optional target layer name to apply retro filters on."),
+  cellSize: z.number().int().min(2).max(128).default(12).describe("Pixel mosaic block size in pixels."),
+  dither: z.boolean().default(true).describe("Apply dither noise matrix filter overlay."),
+  scanlines: z.boolean().default(true).describe("Apply CRT scanlines grid filter overlay."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  compName: z.string().default("MP_Pixel_Art_Filter"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildMatrixDigitalRainSchema = {
+  outputAepPath: z.string().describe("Path of the generated Matrix digital rain AEP project."),
+  color: z.array(z.number()).length(3).default([0.1, 1.0, 0.25]).describe("Neon character RGB color 0..1."),
+  speed: z.number().positive().default(1).describe("Speed multiplier for falling columns."),
+  fontSize: z.number().int().positive().default(20).describe("Font size of the characters."),
+  columnCount: z.number().int().positive().default(28).describe("Number of vertical rain columns to spawn."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(10),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Matrix_Rain"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildBlackHoleGravityWarpSchema = {
+  outputAepPath: z.string().describe("Path of the generated black hole warp AEP project."),
+  singularityColor: z.array(z.number()).length(3).default([0.9, 0.45, 1.0]).describe("Event horizon corona glow RGB color 0..1."),
+  accretionDiskColor: z.array(z.number()).length(3).default([1.0, 0.55, 0.1]).describe("Accretion disk gas RGB color 0..1."),
+  warpStrength: z.number().positive().default(85).describe("Displacement warping offset amount."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(10),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Black_Hole"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildLiquidLavaSimulatorSchema = {
+  outputAepPath: z.string().describe("Path of the generated fluid simulator AEP project."),
+  lavaColor: z.array(z.number()).length(3).default([1.0, 0.25, 0.0]).describe("Primary liquid lava RGB color 0..1."),
+  glowColor: z.array(z.number()).length(3).default([1.0, 0.65, 0.1]).describe("Secondary emission glow RGB color 0..1."),
+  blobCount: z.number().int().positive().default(12).describe("Number of floating organic fluid spheres."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(10),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Liquid_Lava"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildLightningStormGeneratorSchema = {
+  outputAepPath: z.string().describe("Path of the generated storm AEP project."),
+  glowColor: z.array(z.number()).length(3).default([0.3, 0.75, 1.0]).describe("Lightning stroke neon RGB color 0..1."),
+  boltFrequency: z.number().positive().default(2).describe("Frequency multiplier for random lightning strikes."),
+  addRain: z.boolean().default(true).describe("Include atmospheric rain sheet overlay."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(10),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Lightning_Storm"),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildMagicalSummoningSigilSchema = {
+  outputAepPath: z.string().describe("Path of the generated magic circle AEP project."),
+  glowColor: z.array(z.number()).length(3).default([0.6, 0.3, 1.0]).describe("Arcane rune/circle glow RGB color 0..1."),
+  runeText: z.string().default("ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ").describe("Ancient characters to wrap around the sigil circle."),
+  drawDuration: z.number().positive().default(2.5).describe("Time in seconds to draw the concentric sigils."),
+  width: z.number().int().positive().default(1920),
+  height: z.number().int().positive().default(1080),
+  duration: z.number().positive().default(10),
+  fps: z.number().positive().default(30),
+  compName: z.string().default("MP_Magic_Sigil"),
+  approveOverwrite: z.boolean().default(false),
+};
+
 // Type exports — Wave 3
 export type BuildAudioSpectrumVisualizerInput = { [K in keyof typeof buildAudioSpectrumVisualizerSchema]: z.infer<(typeof buildAudioSpectrumVisualizerSchema)[K]> };
 export type BuildInfographicAnimationInput = { [K in keyof typeof buildInfographicAnimationSchema]: z.infer<(typeof buildInfographicAnimationSchema)[K]> };
@@ -1132,6 +1285,464 @@ export type ExportAsLottieInput = { [K in keyof typeof exportAsLottieSchema]: z.
 export type BuildWorldMapInput = { [K in keyof typeof buildWorldMapSchema]: z.infer<(typeof buildWorldMapSchema)[K]> };
 export type BuildTemplateFromBrandkitInput = { [K in keyof typeof buildTemplateFromBrandkitSchema]: z.infer<(typeof buildTemplateFromBrandkitSchema)[K]> };
 export type BuildProductMockupSceneInput = { [K in keyof typeof buildProductMockupSceneSchema]: z.infer<(typeof buildProductMockupSceneSchema)[K]> };
+
+// Type exports — Legendary
+export type Build3dPlanetGeneratorInput = { [K in keyof typeof build3dPlanetGeneratorSchema]: z.infer<(typeof build3dPlanetGeneratorSchema)[K]> };
+export type BuildCyberScanOverlayInput = { [K in keyof typeof buildCyberScanOverlaySchema]: z.infer<(typeof buildCyberScanOverlaySchema)[K]> };
+export type BuildDimensionalRiftInput = { [K in keyof typeof buildDimensionalRiftSchema]: z.infer<(typeof buildDimensionalRiftSchema)[K]> };
+export type GenerateVfxNormalMapSequenceInput = { [K in keyof typeof generateVfxNormalMapSequenceSchema]: z.infer<(typeof generateVfxNormalMapSequenceSchema)[K]> };
+export type BuildCosmicNebulaSceneInput = { [K in keyof typeof buildCosmicNebulaSceneSchema]: z.infer<(typeof buildCosmicNebulaSceneSchema)[K]> };
+export type BuildAudioBeatSyncControllerInput = { [K in keyof typeof buildAudioBeatSyncControllerSchema]: z.infer<(typeof buildAudioBeatSyncControllerSchema)[K]> };
+export type ApplyPixelArtFilterInput = { [K in keyof typeof applyPixelArtFilterSchema]: z.infer<(typeof applyPixelArtFilterSchema)[K]> };
+
+// Type exports — Ultimate
+export type BuildMatrixDigitalRainInput = { [K in keyof typeof buildMatrixDigitalRainSchema]: z.infer<(typeof buildMatrixDigitalRainSchema)[K]> };
+export type BuildBlackHoleGravityWarpInput = { [K in keyof typeof buildBlackHoleGravityWarpSchema]: z.infer<(typeof buildBlackHoleGravityWarpSchema)[K]> };
+export type BuildLiquidLavaSimulatorInput = { [K in keyof typeof buildLiquidLavaSimulatorSchema]: z.infer<(typeof buildLiquidLavaSimulatorSchema)[K]> };
+export type BuildLightningStormGeneratorInput = { [K in keyof typeof buildLightningStormGeneratorSchema]: z.infer<(typeof buildLightningStormGeneratorSchema)[K]> };
+export type BuildMagicalSummoningSigilInput = { [K in keyof typeof buildMagicalSummoningSigilSchema]: z.infer<(typeof buildMagicalSummoningSigilSchema)[K]> };
+
+// ======================================================================
+// Wave 5: 30 Premium Plugin Replicas Schemas
+// ======================================================================
+
+const baseReplicaFields = {
+  outputAepPath: z.string().describe("Path of the output After Effects AEP project file."),
+  approveOverwrite: z.boolean().default(false).describe("Approve overwriting the output AEP if it exists."),
+};
+
+export const vfxParticularParticlesSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.3, 0.7, 1.0]).describe("Birth particle RGB color 0..1."),
+  speed: z.number().positive().default(1.0).describe("Velocity speed scale factor."),
+};
+
+export const vfxSaberNeonSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.2, 1.0, 0.9]).describe("Core glow RGB color 0..1."),
+  size: z.number().positive().default(1.0).describe("Glow size/width scaling factor."),
+};
+
+export const vfxPlexusMeshSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.5, 0.35, 1.0]).describe("Connecting lines RGB color 0..1."),
+};
+
+export const vfxShineRaysSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([1.0, 0.8, 0.3]).describe("Light rays RGB color 0..1."),
+};
+
+export const vfxStarglowStreaksSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([1.0, 0.9, 0.4]).describe("Star glare highlights RGB color 0..1."),
+};
+
+export const vfxMirTerrainSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.1, 0.9, 1.0]).describe("Terrain grid mesh RGB color 0..1."),
+};
+
+export const vfxTaoRibbonsSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([1.0, 0.25, 0.5]).describe("Extruded ribbon spline RGB color 0..1."),
+};
+
+export const vfxFormParticlesSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.4, 0.8, 1.0]).describe("3D wave particle grid RGB color 0..1."),
+};
+
+export const vfxOpticalFlaresSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.9, 0.85, 1.0]).describe("Anamorphic streak halo RGB color 0..1."),
+};
+
+export const vfxElement3DSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.8, 0.7, 0.6]).describe("3D extruded mesh color RGB 0..1."),
+};
+
+export const vfxAnalogGlitchSchema = {
+  ...baseReplicaFields,
+};
+
+export const vfxChromaticAberrationSchema = {
+  ...baseReplicaFields,
+  shift: z.number().positive().default(8).describe("RGB split channel offset in pixels."),
+};
+
+export const vfxHeatwaveRefractionSchema = {
+  ...baseReplicaFields,
+  speed: z.number().positive().default(1.0).describe("Heat refraction speed multiplier."),
+};
+
+export const vfxVhsTapeSchema = {
+  ...baseReplicaFields,
+};
+
+export const vfxLooksGradingSchema = {
+  ...baseReplicaFields,
+};
+
+export const vfxColoristaGradingSchema = {
+  ...baseReplicaFields,
+  shadows: z.array(z.number()).length(3).default([0.0, 0.0, 0.1]).describe("Shadow color lift offsets RGB 0..1."),
+  highlights: z.array(z.number()).length(3).default([0.1, 0.0, 0.0]).describe("Highlight color gain offsets RGB 0..1."),
+};
+
+export const vfxSlowMotionSchema = {
+  ...baseReplicaFields,
+  slowPercent: z.number().min(1).max(99).default(25).describe("Time stretching percent (e.g. 25 = 4x slow motion)."),
+};
+
+export const vfxMotionBlurSchema = {
+  ...baseReplicaFields,
+  blurAmount: z.number().positive().default(1.0).describe("Motion blur shutter angle scale factor."),
+};
+
+export const vfxSapphireGlowSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.9, 0.55, 1.0]).describe("Exponential decay glow RGB color 0..1."),
+};
+
+export const vfxLightningStrikeSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.3, 0.75, 1.0]).describe("Advanced electric lightning strike RGB 0..1."),
+};
+
+export const vfxLensDistortionSchema = {
+  ...baseReplicaFields,
+  warp: z.number().positive().default(1.0).describe("Optics compensation lens warp field multiplier."),
+};
+
+export const vfxContinuumBloomSchema = {
+  ...baseReplicaFields,
+  intensity: z.number().positive().default(1.0).describe("Highlight bloom opacity scale factor."),
+};
+
+export const vfxKaleidoscopeSchema = {
+  ...baseReplicaFields,
+  sectors: z.number().int().min(2).max(64).default(8).describe("Number of mirrored kaleidoscope reflection sectors."),
+};
+
+export const vfxDeepGlowSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.65, 0.3, 1.0]).describe("Exponential box blurs RGB glow color 0..1."),
+};
+
+export const vfxNewtonPhysicsSchema = {
+  ...baseReplicaFields,
+  gravity: z.number().positive().default(1.0).describe("Gravity simulation physics multiplier."),
+};
+
+export const vfxStardustParticlesSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.3, 0.85, 1.0]).describe("Stardust node particles RGB color 0..1."),
+};
+
+export const vfxRiggingJoystickSchema = {
+  ...baseReplicaFields,
+};
+
+export const vfxAutoCropSchema = {
+  ...baseReplicaFields,
+};
+
+export const vfxBrushStrokeSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([1.0, 0.45, 0.1]).describe("Brush stroke path RGB color 0..1."),
+};
+
+export const vfxAudioSpectrumSchema = {
+  ...baseReplicaFields,
+};
+
+export const vfxDepthOfFieldSchema = {
+  ...baseReplicaFields,
+  blur: z.number().positive().default(1.0).describe("Focus distance bokeh camera blur scale factor."),
+};
+
+// Wave 6 Schemas
+export const vfxPlanarTrackerSchema = {
+  ...baseReplicaFields,
+};
+
+export const vfxRotoPaintSchema = {
+  ...baseReplicaFields,
+};
+
+export const vfxNeatDenoiseSchema = {
+  ...baseReplicaFields,
+  sharpness: z.number().positive().default(1.0).describe("Post-denoise sharpening scale factor."),
+};
+
+export const vfxVolumetricRaysSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([1.0, 0.9, 0.6]).describe("Volumetric rays color RGB 0..1."),
+};
+
+export const vfxCinematicFlareSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.2, 0.6, 1.0]).describe("Lens flare elements primary color RGB 0..1."),
+};
+
+export const vfxGodRaysSchema = {
+  ...baseReplicaFields,
+  threshold: z.number().min(0).max(1).default(0.6).describe("Highlight threshold for light rays extraction."),
+};
+
+export const vfxLightWrapSchema = {
+  ...baseReplicaFields,
+  wrapWidth: z.number().positive().default(1.0).describe("Composite wrap edge width factor."),
+};
+
+export const vfxDeepGlowProSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.3, 0.8, 1.0]).describe("Physically accurate glow color RGB 0..1."),
+  aspect: z.number().positive().default(1.5).describe("Horizontal to vertical aspect ratio stretch parameter."),
+};
+
+export const vfxKnollFlareSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([1.0, 0.6, 0.2]).describe("Knoll flare primary color RGB 0..1."),
+};
+
+export const vfxElement3DProSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.8, 0.1, 0.2]).describe("Extruded mesh surface color RGB 0..1."),
+};
+
+export const vfxTwitchGlitchSchema = {
+  ...baseReplicaFields,
+  amount: z.number().positive().default(1.0).describe("Glitch severity and scale displacement factor."),
+};
+
+export const vfx3DStrokeSchema = {
+  ...baseReplicaFields,
+  color: z.array(z.number()).length(3).default([0.9, 0.3, 1.0]).describe("Spline stroke glow color RGB 0..1."),
+};
+
+// ======================================================================
+// Wave 7: Zero-cost premium plugin gap-fill replicas
+// ======================================================================
+
+const advancedReplicaBaseFields = {
+  ...baseReplicaFields,
+  compName: z.string().default("MP_Premium_Replica_Comp").describe("Name of the generated After Effects composition."),
+  duration: z.number().positive().default(10).describe("Composition duration in seconds."),
+  width: z.number().int().positive().default(1920).describe("Composition width."),
+  height: z.number().int().positive().default(1080).describe("Composition height."),
+  intensity: z.number().min(0).max(3).default(1).describe("Overall effect strength multiplier."),
+  color: z.array(z.number()).length(3).default([0.25, 0.75, 1.0]).describe("Primary RGB color 0..1."),
+  sourceFootagePath: z.string().optional().describe("Optional footage/image path to import as a source layer."),
+};
+
+export const vfxChromaKeyStudioSchema = {
+  ...advancedReplicaBaseFields,
+  screenColor: z.enum(["green", "blue", "custom"]).default("green"),
+  spillSuppression: z.number().min(0).max(100).default(65),
+  edgeChoke: z.number().min(0).max(25).default(2),
+};
+export const vfxBeautyRetouchSchema = {
+  ...advancedReplicaBaseFields,
+  skinSmoothing: z.number().min(0).max(100).default(45),
+  preserveDetail: z.number().min(0).max(100).default(70),
+};
+export const vfxSupercompAtmosphereSchema = {
+  ...advancedReplicaBaseFields,
+  haze: z.number().min(0).max(100).default(35),
+  lightWrap: z.number().min(0).max(100).default(45),
+};
+export const vfxOpticalFlowRetimeSchema = {
+  ...advancedReplicaBaseFields,
+  speedPercent: z.number().min(1).max(400).default(40),
+  rampStyle: z.enum(["smooth", "impact", "freeze", "speed_ramp"]).default("smooth"),
+};
+export const vfxDeflickerSchema = {
+  ...advancedReplicaBaseFields,
+  temporalWindow: z.number().int().min(2).max(12).default(5),
+  luminanceSmoothing: z.number().min(0).max(100).default(55),
+};
+export const vfxSoundKeysSchema = {
+  ...advancedReplicaBaseFields,
+  audioPath: z.string().optional().describe("Optional audio file. When provided it is imported and run through AE 'Convert Audio to Keyframes' so the target is driven by REAL audio amplitude; omit to use a procedural sine fallback."),
+  driveProperty: z.enum(["scale", "opacity", "glow", "position", "rotation"]).default("scale"),
+  sensitivity: z.number().min(0.1).max(10).default(1.5),
+};
+export const vfxTrapcodeLuxSchema = {
+  ...advancedReplicaBaseFields,
+  coneLength: z.number().min(0).max(100).default(70),
+};
+export const vfxTrapcodeHorizonSchema = {
+  ...advancedReplicaBaseFields,
+  horizonStyle: z.enum(["sunset", "cyber", "studio", "space"]).default("sunset"),
+};
+export const vfxSapphirePackSchema = {
+  ...advancedReplicaBaseFields,
+  effect: z.enum(["glint", "edge_rays", "aurora", "film_effect", "grunge"]).default("glint"),
+};
+export const vfxCausticsWaterSchema = {
+  ...advancedReplicaBaseFields,
+  waveScale: z.number().min(0.1).max(10).default(2),
+};
+export const vfxHalftonePrintSchema = {
+  ...advancedReplicaBaseFields,
+  dotSize: z.number().min(2).max(80).default(18),
+  pixelSort: z.boolean().default(true),
+};
+export const vfxMojoTealOrangeSchema = {
+  ...advancedReplicaBaseFields,
+  skinProtect: z.number().min(0).max(100).default(70),
+};
+export const vfxCosmoSkinSchema = {
+  ...advancedReplicaBaseFields,
+  smoothing: z.number().min(0).max(100).default(35),
+};
+export const vfxUniverseGlitchPackSchema = {
+  ...advancedReplicaBaseFields,
+  style: z.enum(["holomatrix", "retrograde", "datamosh", "crt"]).default("holomatrix"),
+};
+export const vfxCameraShakeProSchema = {
+  ...advancedReplicaBaseFields,
+  profile: z.enum(["handheld", "impact", "earthquake", "engine_idle"]).default("handheld"),
+};
+export const vfxFilmDamageSchema = {
+  ...advancedReplicaBaseFields,
+  age: z.number().min(0).max(100).default(65),
+};
+export const vfxTitleStudioSchema = {
+  ...advancedReplicaBaseFields,
+  text: z.string().default("MOTIONPILOT"),
+  extrudeDepth: z.number().min(0).max(200).default(60),
+};
+export const vfxPixelChooserMaskSchema = {
+  ...advancedReplicaBaseFields,
+  qualifier: z.enum(["luma", "chroma", "skin", "depth"]).default("luma"),
+};
+export const rigRubberhoseLimbsSchema = {
+  ...advancedReplicaBaseFields,
+  limbCount: z.number().int().min(1).max(8).default(2),
+};
+export const animSquashStretchSchema = {
+  ...advancedReplicaBaseFields,
+  elasticity: z.number().min(0).max(100).default(55),
+};
+export const animMotionToolsSchema = {
+  ...advancedReplicaBaseFields,
+  preset: z.enum(["anchor_center", "align_grid", "auto_ease", "excite_wiggle"]).default("auto_ease"),
+};
+export const animExplodeShapeLayersSchema = {
+  ...advancedReplicaBaseFields,
+  pieces: z.number().int().min(2).max(64).default(12),
+};
+export const animTransitionBrowserSchema = {
+  ...advancedReplicaBaseFields,
+  transition: z.enum(["whip_pan", "zoom_blur", "glitch_cut", "liquid_wipe", "light_leak"]).default("whip_pan"),
+};
+export const vfxOrganicTrackSchema = {
+  ...advancedReplicaBaseFields,
+  meshDensity: z.number().int().min(2).max(16).default(6),
+};
+export const vfxObjectRemovalSchema = {
+  ...advancedReplicaBaseFields,
+  fillMethod: z.enum(["temporal", "clone", "content_aware_mock"]).default("temporal"),
+};
+export const vfxReflectionMirrorSchema = {
+  ...advancedReplicaBaseFields,
+  floorFade: z.number().min(0).max(100).default(65),
+};
+export const vfx3dCameraTrackSchema = {
+  ...advancedReplicaBaseFields,
+  solveQuality: z.enum(["draft", "standard", "high"]).default("standard"),
+};
+export const gradeFilmEmulationSchema = {
+  ...advancedReplicaBaseFields,
+  stock: z.enum(["kodak_2383", "kodak_portra", "fuji_eterna", "bleach_bypass", "noir"]).default("kodak_2383"),
+  grain: z.number().min(0).max(100).default(22),
+};
+export const gradeColorFinesseSchema = {
+  ...advancedReplicaBaseFields,
+  look: z.enum(["neutral_balance", "commercial_pop", "skin_line", "night_for_day"]).default("commercial_pop"),
+};
+
+// Type exports
+export type VfxParticularParticlesInput = { [K in keyof typeof vfxParticularParticlesSchema]: z.infer<(typeof vfxParticularParticlesSchema)[K]> };
+export type VfxSaberNeonInput = { [K in keyof typeof vfxSaberNeonSchema]: z.infer<(typeof vfxSaberNeonSchema)[K]> };
+export type VfxPlexusMeshInput = { [K in keyof typeof vfxPlexusMeshSchema]: z.infer<(typeof vfxPlexusMeshSchema)[K]> };
+export type VfxShineRaysInput = { [K in keyof typeof vfxShineRaysSchema]: z.infer<(typeof vfxShineRaysSchema)[K]> };
+export type VfxStarglowStreaksInput = { [K in keyof typeof vfxStarglowStreaksSchema]: z.infer<(typeof vfxStarglowStreaksSchema)[K]> };
+export type VfxMirTerrainInput = { [K in keyof typeof vfxMirTerrainSchema]: z.infer<(typeof vfxMirTerrainSchema)[K]> };
+export type VfxTaoRibbonsInput = { [K in keyof typeof vfxTaoRibbonsSchema]: z.infer<(typeof vfxTaoRibbonsSchema)[K]> };
+export type VfxFormParticlesInput = { [K in keyof typeof vfxFormParticlesSchema]: z.infer<(typeof vfxFormParticlesSchema)[K]> };
+export type VfxOpticalFlaresInput = { [K in keyof typeof vfxOpticalFlaresSchema]: z.infer<(typeof vfxOpticalFlaresSchema)[K]> };
+export type VfxElement3DInput = { [K in keyof typeof vfxElement3DSchema]: z.infer<(typeof vfxElement3DSchema)[K]> };
+export type VfxAnalogGlitchInput = { [K in keyof typeof vfxAnalogGlitchSchema]: z.infer<(typeof vfxAnalogGlitchSchema)[K]> };
+export type VfxChromaticAberrationInput = { [K in keyof typeof vfxChromaticAberrationSchema]: z.infer<(typeof vfxChromaticAberrationSchema)[K]> };
+export type VfxHeatwaveRefractionInput = { [K in keyof typeof vfxHeatwaveRefractionSchema]: z.infer<(typeof vfxHeatwaveRefractionSchema)[K]> };
+export type VfxVhsTapeInput = { [K in keyof typeof vfxVhsTapeSchema]: z.infer<(typeof vfxVhsTapeSchema)[K]> };
+export type VfxLooksGradingInput = { [K in keyof typeof vfxLooksGradingSchema]: z.infer<(typeof vfxLooksGradingSchema)[K]> };
+export type VfxColoristaGradingInput = { [K in keyof typeof vfxColoristaGradingSchema]: z.infer<(typeof vfxColoristaGradingSchema)[K]> };
+export type VfxSlowMotionInput = { [K in keyof typeof vfxSlowMotionSchema]: z.infer<(typeof vfxSlowMotionSchema)[K]> };
+export type VfxMotionBlurInput = { [K in keyof typeof vfxMotionBlurSchema]: z.infer<(typeof vfxMotionBlurSchema)[K]> };
+export type VfxSapphireGlowInput = { [K in keyof typeof vfxSapphireGlowSchema]: z.infer<(typeof vfxSapphireGlowSchema)[K]> };
+export type VfxLightningStrikeInput = { [K in keyof typeof vfxLightningStrikeSchema]: z.infer<(typeof vfxLightningStrikeSchema)[K]> };
+export type VfxLensDistortionInput = { [K in keyof typeof vfxLensDistortionSchema]: z.infer<(typeof vfxLensDistortionSchema)[K]> };
+export type VfxContinuumBloomInput = { [K in keyof typeof vfxContinuumBloomSchema]: z.infer<(typeof vfxContinuumBloomSchema)[K]> };
+export type VfxKaleidoscopeInput = { [K in keyof typeof vfxKaleidoscopeSchema]: z.infer<(typeof vfxKaleidoscopeSchema)[K]> };
+export type VfxDeepGlowInput = { [K in keyof typeof vfxDeepGlowSchema]: z.infer<(typeof vfxDeepGlowSchema)[K]> };
+export type VfxNewtonPhysicsInput = { [K in keyof typeof vfxNewtonPhysicsSchema]: z.infer<(typeof vfxNewtonPhysicsSchema)[K]> };
+export type VfxStardustParticlesInput = { [K in keyof typeof vfxStardustParticlesSchema]: z.infer<(typeof vfxStardustParticlesSchema)[K]> };
+export type VfxRiggingJoystickInput = { [K in keyof typeof vfxRiggingJoystickSchema]: z.infer<(typeof vfxRiggingJoystickSchema)[K]> };
+export type VfxAutoCropInput = { [K in keyof typeof vfxAutoCropSchema]: z.infer<(typeof vfxAutoCropSchema)[K]> };
+export type VfxBrushStrokeInput = { [K in keyof typeof vfxBrushStrokeSchema]: z.infer<(typeof vfxBrushStrokeSchema)[K]> };
+export type VfxAudioSpectrumInput = { [K in keyof typeof vfxAudioSpectrumSchema]: z.infer<(typeof vfxAudioSpectrumSchema)[K]> };
+export type VfxDepthOfFieldInput = { [K in keyof typeof vfxDepthOfFieldSchema]: z.infer<(typeof vfxDepthOfFieldSchema)[K]> };
+
+// Wave 6 Inputs
+export type VfxPlanarTrackerInput = { [K in keyof typeof vfxPlanarTrackerSchema]: z.infer<(typeof vfxPlanarTrackerSchema)[K]> };
+export type VfxRotoPaintInput = { [K in keyof typeof vfxRotoPaintSchema]: z.infer<(typeof vfxRotoPaintSchema)[K]> };
+export type VfxNeatDenoiseInput = { [K in keyof typeof vfxNeatDenoiseSchema]: z.infer<(typeof vfxNeatDenoiseSchema)[K]> };
+export type VfxVolumetricRaysInput = { [K in keyof typeof vfxVolumetricRaysSchema]: z.infer<(typeof vfxVolumetricRaysSchema)[K]> };
+export type VfxCinematicFlareInput = { [K in keyof typeof vfxCinematicFlareSchema]: z.infer<(typeof vfxCinematicFlareSchema)[K]> };
+export type VfxGodRaysInput = { [K in keyof typeof vfxGodRaysSchema]: z.infer<(typeof vfxGodRaysSchema)[K]> };
+export type VfxLightWrapInput = { [K in keyof typeof vfxLightWrapSchema]: z.infer<(typeof vfxLightWrapSchema)[K]> };
+export type VfxDeepGlowProInput = { [K in keyof typeof vfxDeepGlowProSchema]: z.infer<(typeof vfxDeepGlowProSchema)[K]> };
+export type VfxKnollFlareInput = { [K in keyof typeof vfxKnollFlareSchema]: z.infer<(typeof vfxKnollFlareSchema)[K]> };
+export type VfxElement3DProInput = { [K in keyof typeof vfxElement3DProSchema]: z.infer<(typeof vfxElement3DProSchema)[K]> };
+export type VfxTwitchGlitchInput = { [K in keyof typeof vfxTwitchGlitchSchema]: z.infer<(typeof vfxTwitchGlitchSchema)[K]> };
+export type Vfx3DStrokeInput = { [K in keyof typeof vfx3DStrokeSchema]: z.infer<(typeof vfx3DStrokeSchema)[K]> };
+
+export type VfxChromaKeyStudioInput = { [K in keyof typeof vfxChromaKeyStudioSchema]: z.infer<(typeof vfxChromaKeyStudioSchema)[K]> };
+export type VfxBeautyRetouchInput = { [K in keyof typeof vfxBeautyRetouchSchema]: z.infer<(typeof vfxBeautyRetouchSchema)[K]> };
+export type VfxSupercompAtmosphereInput = { [K in keyof typeof vfxSupercompAtmosphereSchema]: z.infer<(typeof vfxSupercompAtmosphereSchema)[K]> };
+export type VfxOpticalFlowRetimeInput = { [K in keyof typeof vfxOpticalFlowRetimeSchema]: z.infer<(typeof vfxOpticalFlowRetimeSchema)[K]> };
+export type VfxDeflickerInput = { [K in keyof typeof vfxDeflickerSchema]: z.infer<(typeof vfxDeflickerSchema)[K]> };
+export type VfxSoundKeysInput = { [K in keyof typeof vfxSoundKeysSchema]: z.infer<(typeof vfxSoundKeysSchema)[K]> };
+export type VfxTrapcodeLuxInput = { [K in keyof typeof vfxTrapcodeLuxSchema]: z.infer<(typeof vfxTrapcodeLuxSchema)[K]> };
+export type VfxTrapcodeHorizonInput = { [K in keyof typeof vfxTrapcodeHorizonSchema]: z.infer<(typeof vfxTrapcodeHorizonSchema)[K]> };
+export type VfxSapphirePackInput = { [K in keyof typeof vfxSapphirePackSchema]: z.infer<(typeof vfxSapphirePackSchema)[K]> };
+export type VfxCausticsWaterInput = { [K in keyof typeof vfxCausticsWaterSchema]: z.infer<(typeof vfxCausticsWaterSchema)[K]> };
+export type VfxHalftonePrintInput = { [K in keyof typeof vfxHalftonePrintSchema]: z.infer<(typeof vfxHalftonePrintSchema)[K]> };
+export type VfxMojoTealOrangeInput = { [K in keyof typeof vfxMojoTealOrangeSchema]: z.infer<(typeof vfxMojoTealOrangeSchema)[K]> };
+export type VfxCosmoSkinInput = { [K in keyof typeof vfxCosmoSkinSchema]: z.infer<(typeof vfxCosmoSkinSchema)[K]> };
+export type VfxUniverseGlitchPackInput = { [K in keyof typeof vfxUniverseGlitchPackSchema]: z.infer<(typeof vfxUniverseGlitchPackSchema)[K]> };
+export type VfxCameraShakeProInput = { [K in keyof typeof vfxCameraShakeProSchema]: z.infer<(typeof vfxCameraShakeProSchema)[K]> };
+export type VfxFilmDamageInput = { [K in keyof typeof vfxFilmDamageSchema]: z.infer<(typeof vfxFilmDamageSchema)[K]> };
+export type VfxTitleStudioInput = { [K in keyof typeof vfxTitleStudioSchema]: z.infer<(typeof vfxTitleStudioSchema)[K]> };
+export type VfxPixelChooserMaskInput = { [K in keyof typeof vfxPixelChooserMaskSchema]: z.infer<(typeof vfxPixelChooserMaskSchema)[K]> };
+export type RigRubberhoseLimbsInput = { [K in keyof typeof rigRubberhoseLimbsSchema]: z.infer<(typeof rigRubberhoseLimbsSchema)[K]> };
+export type AnimSquashStretchInput = { [K in keyof typeof animSquashStretchSchema]: z.infer<(typeof animSquashStretchSchema)[K]> };
+export type AnimMotionToolsInput = { [K in keyof typeof animMotionToolsSchema]: z.infer<(typeof animMotionToolsSchema)[K]> };
+export type AnimExplodeShapeLayersInput = { [K in keyof typeof animExplodeShapeLayersSchema]: z.infer<(typeof animExplodeShapeLayersSchema)[K]> };
+export type AnimTransitionBrowserInput = { [K in keyof typeof animTransitionBrowserSchema]: z.infer<(typeof animTransitionBrowserSchema)[K]> };
+export type VfxOrganicTrackInput = { [K in keyof typeof vfxOrganicTrackSchema]: z.infer<(typeof vfxOrganicTrackSchema)[K]> };
+export type VfxObjectRemovalInput = { [K in keyof typeof vfxObjectRemovalSchema]: z.infer<(typeof vfxObjectRemovalSchema)[K]> };
+export type VfxReflectionMirrorInput = { [K in keyof typeof vfxReflectionMirrorSchema]: z.infer<(typeof vfxReflectionMirrorSchema)[K]> };
+export type Vfx3dCameraTrackInput = { [K in keyof typeof vfx3dCameraTrackSchema]: z.infer<(typeof vfx3dCameraTrackSchema)[K]> };
+export type GradeFilmEmulationInput = { [K in keyof typeof gradeFilmEmulationSchema]: z.infer<(typeof gradeFilmEmulationSchema)[K]> };
+export type GradeColorFinesseInput = { [K in keyof typeof gradeColorFinesseSchema]: z.infer<(typeof gradeColorFinesseSchema)[K]> };
+
 
 // ======================================================================
 // Unity game VFX production toolkit schemas
@@ -1167,7 +1778,7 @@ const unityVfxBaseSchema = {
   particleBudget: z.number().int().positive().optional(),
   overdrawBudget: z.number().positive().optional(),
   variationCount: z.number().int().positive().max(100).optional().describe("Number of controlled variants to plan/generate in the package."),
-  qualityTarget: z.enum(["prototype", "production", "assetStore"]).optional().describe("Output quality target for naming, docs, and optimization recommendations."),
+  qualityTarget: z.enum(["prototype", "production", "assetStore"]).default("assetStore").describe("Output quality target for naming, docs, optimization recommendations, and marketplace deliverables."),
   approveOverwrite: z.boolean().default(false),
 };
 
@@ -1345,3 +1956,615 @@ export const compareLodVisualLossSchema = unityVfxSchema({
 export const validateMobileVfxPackSchema = unityVfxSchema({
   targetPlatform: unityPlatformSchema.default("mobile"),
 });
+
+// Wave 8: game VFX market expansion, cross-engine exports, and deeper pipelines
+const extendedGameEffectTypeSchema = z.enum([
+  "energy", "fire", "ice", "lightning", "heal", "poison", "shield", "portal", "slash", "impact", "smoke", "magic",
+  "environment", "destruction", "gore", "scifi", "vehicle", "gameFeel", "casual", "locomotion", "decal", "shader", "ability"
+]);
+
+export const buildUnrealNiagaraPackSchema = unityVfxSchema({
+  effectType: extendedGameEffectTypeSchema.optional(),
+  targetPipeline: z.enum(["urp", "hdrp", "built-in"]).default("urp").describe("Ignored for Unreal; retained for shared manifest compatibility."),
+});
+export const buildGodotParticlesPackSchema = unityVfxSchema({
+  effectType: extendedGameEffectTypeSchema.optional(),
+  godotVersion: z.enum(["4.x", "3.x"]).default("4.x"),
+});
+export const exportEffekseerProjectSchema = unityVfxSchema({
+  effectType: extendedGameEffectTypeSchema.optional(),
+});
+export const buildEngineAgnosticVfxManifestSchema = unityVfxSchema({
+  engineTargets: z.array(z.enum(["unity", "unreal", "godot", "effekseer", "custom"])).default(["unity", "unreal", "godot", "effekseer"]),
+  effectType: extendedGameEffectTypeSchema.optional(),
+});
+export const buildEnvironmentAmbientPackSchema = unityVfxSchema({
+  elements: z.array(z.enum(["rain", "snow", "fog", "sandstorm", "waterfall", "torch_fire", "fireflies", "dust_motes", "wind_leaves", "bioluminescence"])).optional(),
+});
+export const buildDestructionGorePackSchema = unityVfxSchema({
+  elements: z.array(z.enum(["glass_shatter", "wood_splinters", "debris_chunks", "blood_splatter", "blood_pool", "ragdoll_residue"])).optional(),
+});
+export const buildScifiTechPackSchema = unityVfxSchema({
+  elements: z.array(z.enum(["plasma", "energy_shield", "teleport_warp", "hologram_glitch", "emp_wave", "laser_beam", "force_field", "tractor_beam", "sci_fi_explosion"])).optional(),
+});
+export const buildVehicleVfxPackSchema = unityVfxSchema({
+  elements: z.array(z.enum(["exhaust_smoke", "tire_smoke", "skid_marks", "nitro_burst", "jet_trail", "water_wake", "dust_trail"])).optional(),
+});
+export const buildGameFeelJuicePackSchema = unityVfxSchema({
+  elements: z.array(z.enum(["damage_numbers", "level_up", "xp_gain", "coin_loot_pickup", "combo_counter", "crit_flash", "heal_buff_aura", "screen_shake_trigger", "hitstop"])).optional(),
+});
+export const buildMagicSchoolExtendedSchema = unityVfxSchema({
+  elements: z.array(z.enum(["necromancy", "holy_light", "nature_druid", "blood_magic", "void_eldritch", "time", "gravity"])).optional(),
+});
+export const buildCasualCardFxPackSchema = unityVfxSchema({
+  elements: z.array(z.enum(["confetti", "sparkle", "match_burst", "slot_machine", "bubble_pop", "card_glint", "card_flip"])).optional(),
+});
+export const buildLocomotionFxPackSchema = unityVfxSchema({
+  elements: z.array(z.enum(["footstep_dust", "water_splash", "snow_track", "jump_puff", "landing_puff", "dash_trail", "wall_run_spark"])).optional(),
+});
+export const generateMotionVectorFlowmapSchema = unityVfxSchema({
+  texturePath: z.string().optional().describe("Optional flipbook or PNG sequence path to describe flowmap generation for."),
+});
+export const buildAbilityTimelineSchema = unityVfxSchema({
+  abilityName: z.string().default("MotionPilotAbility"),
+  phases: z.array(z.enum(["cast", "channel", "release", "impact", "aftermath", "cooldown"])).default(["cast", "channel", "release", "impact", "aftermath"]),
+});
+export const bindVfxToAnimationEventsSchema = unityVfxSchema({
+  animationClipName: z.string().default("Attack.anim"),
+  eventName: z.string().default("release"),
+});
+export const buildRealtimeShaderLibrarySchema = unityVfxSchema({
+  elements: z.array(z.enum(["dissolve", "force_field_fresnel", "hologram", "toon_cel", "water", "lava", "ice", "glow"])).optional(),
+});
+export const pairVfxWithSfxSchema = unityVfxSchema({
+  sfxStyle: z.enum(["cinematic_game", "retro_arcade", "casual_mobile", "dark_fantasy", "sci_fi"]).default("cinematic_game"),
+});
+export const buildDecalProjectionSystemSchema = unityVfxSchema({
+  elements: z.array(z.enum(["scorch", "blood_accumulation", "ice_build_up", "poison_puddle", "crack", "magic_rune"])).optional(),
+});
+export const vfxFromConceptArtSchema = unityVfxSchema({
+  conceptArtPath: z.string().optional(),
+});
+export const matchGameArtDirectionSchema = unityVfxSchema({
+  screenshotPaths: z.array(z.string()).optional(),
+});
+export const vfxPackAutopilotSchema = unityVfxSchema({
+  packSize: z.number().int().min(1).max(100).default(30),
+  prompt: z.string().min(3).describe("Full pack request, e.g. 'dark fantasy RPG spell pack with 30 effects'."),
+});
+
+export const liveUnityVfxAuthorSchema = {
+  graphName: z.string().min(1).default("MotionPilotLiveVFX"),
+  prompt: z.string().min(3),
+  outputFolder: z.string(),
+  previewInUnity: z.boolean().default(true),
+  unityAssetDir: z.string().default("Assets/MotionPilot").describe("Unity-relative folder where the compiled VFX artifact is written so the live preview binds to a real in-project asset."),
+};
+
+// --- Phase 1: MVP Canavarı new schemas ---
+export const generateAiPlateSchema = {
+  prompt: z.string().min(3).describe("Visual concept/prompt for the AI-generated plate."),
+  outputFolder: z.string().describe("Output folder to save the generated PNG."),
+  width: z.number().int().positive().default(1080),
+  height: z.number().int().positive().default(1920),
+  style: z.string().optional().describe("Optional style modifier (e.g. photorealistic, vector)."),
+  palette: z.array(z.string()).optional().describe("Optional color hex codes or descriptors."),
+};
+
+export const generateAiVideoShotSchema = {
+  prompt: z.string().min(3).describe("Video generation prompt/concept."),
+  outputFolder: z.string().describe("Output folder to save the generated video MP4."),
+  format: z.enum(["vertical", "horizontal", "square"]).default("vertical"),
+  duration: z.number().positive().default(4).describe("Desired duration in seconds."),
+  fps: z.number().int().positive().default(30),
+};
+
+export const ttsVoiceoverSchema = {
+  text: z.string().min(1).describe("The text content to convert to voiceover speech."),
+  outputFolder: z.string().describe("Output folder to save the generated .wav file."),
+  voice: z.string().default("alloy").describe("Voice name or profile to use."),
+  speed: z.number().positive().default(1.0).describe("Speech speed multiplier (0.5 to 2.0)."),
+  duration: z.number().positive().optional().describe("Override target duration in seconds for mock mode."),
+};
+
+export const sttTranscribeSchema = {
+  audioPath: z.string().describe("Path to the source audio .wav file."),
+  referenceText: z.string().optional().describe("Optional reference text to guide or verify transcription."),
+};
+
+export const jsxDryRunSchema = {
+  jsxContent: z.string().min(1).describe("The ExtendScript (JSX) code block to validate."),
+};
+
+export const renderFarmQueueSchema = {
+  renders: z.array(z.object({
+    aepPath: z.string().describe("Path to the source .aep project file."),
+    compName: z.string().describe("Composition name to render."),
+    outputVideoPath: z.string().describe("Target output video path."),
+    maxRetries: z.number().int().nonnegative().optional().describe("Max retries on render failure."),
+  })).min(1).describe("List of render jobs to run in parallel."),
+  maxConcurrency: z.number().int().positive().default(2).describe("Maximum parallel render processes."),
+};
+
+export type GenerateAiPlateInput = { [K in keyof typeof generateAiPlateSchema]: z.infer<(typeof generateAiPlateSchema)[K]> };
+export type GenerateAiVideoShotInput = { [K in keyof typeof generateAiVideoShotSchema]: z.infer<(typeof generateAiVideoShotSchema)[K]> };
+export type TtsVoiceoverInput = { [K in keyof typeof ttsVoiceoverSchema]: z.infer<(typeof ttsVoiceoverSchema)[K]> };
+export type SttTranscribeInput = { [K in keyof typeof sttTranscribeSchema]: z.infer<(typeof sttTranscribeSchema)[K]> };
+export type JsxDryRunInput = { [K in keyof typeof jsxDryRunSchema]: z.infer<(typeof jsxDryRunSchema)[K]> };
+export type RenderFarmQueueInput = { [K in keyof typeof renderFarmQueueSchema]: z.infer<(typeof renderFarmQueueSchema)[K]> };
+
+// --- Phase 2: Orkestratör & Reklam ---
+export const motionpilotDirectorSchema = {
+  brief: z.string().min(5).describe("Natural language creative brief for the ad/video."),
+  brandName: z.string().optional().describe("Optionally specify brand/product name."),
+  outputFolder: z.string().describe("Output folder for project files and deliverables."),
+  concurrency: z.number().int().positive().default(2),
+};
+
+export const brandKitIngestSchema = {
+  brandName: z.string().min(1).describe("Brand/company name."),
+  logoPath: z.string().optional().describe("Optional path to the logo file."),
+  palette: z.array(z.string()).min(1).describe("List of kurumsal HEX colors."),
+  font: z.string().default("Arial Black"),
+  secondaryFont: z.string().optional(),
+  fontSize: z.number().int().positive().default(110),
+  marketingVoice: z.enum(["professional", "energetic", "minimal", "playful"]).default("professional"),
+  additionalRules: z.array(z.string()).optional(),
+};
+
+export const adConceptGeneratorSchema = {
+  productName: z.string().min(1),
+  productDescription: z.string().min(5),
+  duration: z.number().positive().default(15),
+};
+
+export const multiformatAdExportSchema = {
+  aepPath: z.string().describe("Path to the source .aep project file."),
+  outputAepPath: z.string().describe("Path to save the reframed .aep project file."),
+  targetFormats: z.array(z.enum(["vertical", "square", "horizontal", "portrait"])).min(1),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const viralityGateSchema = {
+  hook: z.string().min(1).describe("Marketing hook copy text."),
+  cta: z.string().min(1).describe("Call-to-action copy text."),
+};
+
+export const abVariantFactorySchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  variants: z.array(z.object({
+    suffix: z.string().min(1),
+    hook: z.string().min(1),
+    cta: z.string().min(1),
+  })).min(1),
+  approveOverwrite: z.boolean().default(false),
+};
+
+// --- Phase 3: İleri Animasyon & VFX ---
+export const smartKeyframeAssistantSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  layerName: z.string(),
+  principle: z.enum(["overshoot", "anticipation", "squashStretch", "elasticEase"]),
+  startTime: z.number().nonnegative(),
+  duration: z.number().positive(),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const buildCharacterRigSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  joints: z.array(z.object({
+    layerName: z.string(),
+    parentName: z.string(),
+  })).min(1),
+  breathLayer: z.string().optional(),
+  blinkLayers: z.array(z.string()).optional(),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const autoLipSyncSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  mouthLayerName: z.string(),
+  transcriptPath: z.string(),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const cameraChoreographerSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  moves: z.array(z.object({
+    type: z.enum(["dolly", "orbit", "pan", "tilt", "rackFocus"]),
+    startTime: z.number().nonnegative(),
+    duration: z.number().positive(),
+    strength: z.number().optional(),
+  })).min(1),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const sceneToSceneTransitionsSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  transitionType: z.enum(["whipPan", "zoomBlur", "morphWipe", "glitchCut"]),
+  timestamp: z.number().nonnegative(),
+  duration: z.number().positive(),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const realtimeVfxPreviewSchema = {
+  packageName: z.string().describe("Unity package name containing the VFX assets."),
+};
+
+export const proceduralVfxGraphCompilerSchema = {
+  graphName: z.string().min(1),
+  prompt: z.string().min(3),
+  outputFolder: z.string(),
+};
+
+export const vfxSimulationBakerSchema = {
+  outputFolder: z.string(),
+  frameCount: z.number().int().positive().default(16),
+  width: z.number().int().positive().default(256),
+  height: z.number().int().positive().default(256),
+  columns: z.number().int().positive().optional(),
+  type: z.enum(["fire", "energy", "shockwave"]).default("energy"),
+};
+
+export const vfxQualityGraderV2Schema = {
+  aepPath: z.string(),
+  compName: z.string().optional(),
+};
+
+// --- Phase 4: Ölçek & Teslim ---
+export const smartProxyWorkflowSchema = {
+  imagePaths: z.array(z.string()).min(1),
+  proxyFolder: z.string(),
+};
+
+export const deliveryPackagerSchema = {
+  outputFolder: z.string(),
+  videoPath: z.string(),
+  thumbnailPath: z.string().optional(),
+  title: z.string(),
+  description: z.string(),
+  platforms: z.array(z.string()).min(1).default(["youtube", "tiktok", "meta"]),
+};
+
+export const localizationPackSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  languageCode: z.string().length(2),
+  translations: z.array(z.object({
+    originalText: z.string(),
+    translatedText: z.string(),
+  })).min(1),
+  audioPath: z.string().optional(),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const productShotStudioSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string().default("00_MOCKUP_STUDIO"),
+  productImagePath: z.string(),
+  rotationSpeed: z.number().optional(),
+  addLighting: z.boolean().default(true),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export const aiInpaintAndExtendSchema = {
+  videoPath: z.string(),
+  outputPath: z.string(),
+  extendDuration: z.number().positive(),
+  upscaleFactor: z.enum([2, 4] as any).default(2 as any),
+};
+
+export const houdiniAlembicBridgeSchema = {
+  alembicPath: z.string(),
+  outputFolder: z.string(),
+  compName: z.string().optional(),
+  loop: z.boolean().default(false),
+};
+
+export const autoMusicScoreSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  musicPath: z.string(),
+  transcriptPath: z.string(),
+  duckingDb: z.number().default(-12),
+  approveOverwrite: z.boolean().default(false),
+};
+
+export type MotionpilotDirectorInput = { [K in keyof typeof motionpilotDirectorSchema]: z.infer<(typeof motionpilotDirectorSchema)[K]> };
+export type BrandKitIngestInput = { [K in keyof typeof brandKitIngestSchema]: z.infer<(typeof brandKitIngestSchema)[K]> };
+export type AdConceptGeneratorInput = { [K in keyof typeof adConceptGeneratorSchema]: z.infer<(typeof adConceptGeneratorSchema)[K]> };
+export type MultiformatAdExportInput = { [K in keyof typeof multiformatAdExportSchema]: z.infer<(typeof multiformatAdExportSchema)[K]> };
+export type ViralityGateInput = { [K in keyof typeof viralityGateSchema]: z.infer<(typeof viralityGateSchema)[K]> };
+export type AbVariantFactoryInput = { [K in keyof typeof abVariantFactorySchema]: z.infer<(typeof abVariantFactorySchema)[K]> };
+export type SmartKeyframeAssistantInput = { [K in keyof typeof smartKeyframeAssistantSchema]: z.infer<(typeof smartKeyframeAssistantSchema)[K]> };
+export type BuildCharacterRigInput = { [K in keyof typeof buildCharacterRigSchema]: z.infer<(typeof buildCharacterRigSchema)[K]> };
+export type AutoLipSyncInput = { [K in keyof typeof autoLipSyncSchema]: z.infer<(typeof autoLipSyncSchema)[K]> };
+export type CameraChoreographerInput = { [K in keyof typeof cameraChoreographerSchema]: z.infer<(typeof cameraChoreographerSchema)[K]> };
+export type SceneToSceneTransitionsInput = { [K in keyof typeof sceneToSceneTransitionsSchema]: z.infer<(typeof sceneToSceneTransitionsSchema)[K]> };
+export type RealtimeVfxPreviewInput = { [K in keyof typeof realtimeVfxPreviewSchema]: z.infer<(typeof realtimeVfxPreviewSchema)[K]> };
+export type ProceduralVfxGraphCompilerInput = { [K in keyof typeof proceduralVfxGraphCompilerSchema]: z.infer<(typeof proceduralVfxGraphCompilerSchema)[K]> };
+export type VfxSimulationBakerInput = { [K in keyof typeof vfxSimulationBakerSchema]: z.infer<(typeof vfxSimulationBakerSchema)[K]> };
+export type VfxQualityGraderV2Input = { [K in keyof typeof vfxQualityGraderV2Schema]: z.infer<(typeof vfxQualityGraderV2Schema)[K]> };
+export type SmartProxyWorkflowInput = { [K in keyof typeof smartProxyWorkflowSchema]: z.infer<(typeof smartProxyWorkflowSchema)[K]> };
+export type DeliveryPackagerInput = { [K in keyof typeof deliveryPackagerSchema]: z.infer<(typeof deliveryPackagerSchema)[K]> };
+export type LocalizationPackInput = { [K in keyof typeof localizationPackSchema]: z.infer<(typeof localizationPackSchema)[K]> };
+export type ProductShotStudioInput = { [K in keyof typeof productShotStudioSchema]: z.infer<(typeof productShotStudioSchema)[K]> };
+export type AiInpaintAndExtendInput = { [K in keyof typeof aiInpaintAndExtendSchema]: z.infer<(typeof aiInpaintAndExtendSchema)[K]> };
+export type HoudiniAlembicBridgeInput = { [K in keyof typeof houdiniAlembicBridgeSchema]: z.infer<(typeof houdiniAlembicBridgeSchema)[K]> };
+export type AutoMusicScoreInput = { [K in keyof typeof autoMusicScoreSchema]: z.infer<(typeof autoMusicScoreSchema)[K]> };
+
+
+
+// ---------------------------------------------------------------------------
+// Observability
+// ---------------------------------------------------------------------------
+export const jobStatusSchema = {
+  jobId: z.string().optional(),
+};
+export type JobStatusInput = { [K in keyof typeof jobStatusSchema]: z.infer<(typeof jobStatusSchema)[K]> };
+
+// ---------------------------------------------------------------------------
+// Real video generation via Runway ML
+// ---------------------------------------------------------------------------
+export const runwayGenerateVideoSchema = {
+  prompt: z.string().min(1),
+  format: z.enum(["vertical", "horizontal", "square"]).default("vertical"),
+  duration: z.number().refine((v: number) => [4, 8, 10].includes(v), { message: "Duration must be 4, 8, or 10" }).default(4),
+  imagePromptUrl: z.string().url().optional(),
+  outputDir: z.string(),
+};
+export type RunwayGenerateVideoInput = { [K in keyof typeof runwayGenerateVideoSchema]: z.infer<(typeof runwayGenerateVideoSchema)[K]> };
+
+// ---------------------------------------------------------------------------
+// Multi-locale batch localization (text-layer swap per locale)
+// ---------------------------------------------------------------------------
+export const localizationPackBatchSchema = {
+  aepPath: z.string(),
+  compName: z.string(),
+  outputDir: z.string(),
+  locales: z.array(z.object({
+    locale: z.string(),
+    texts: z.record(z.string()),
+    fontOverrides: z.record(z.string()).optional(),
+    filenameSuffix: z.string().optional(),
+  })).optional(),
+  localesJsonPath: z.string().optional(),
+  approveOverwrite: z.boolean().default(false),
+};
+export type LocalizationPackBatchInput = { [K in keyof typeof localizationPackBatchSchema]: z.infer<(typeof localizationPackBatchSchema)[K]> };
+
+// ---------------------------------------------------------------------------
+// Autonomous ad factory tools
+// ---------------------------------------------------------------------------
+const brandMemorySchema = z.object({
+  slug: z.string().optional(),
+  name: z.string().optional(),
+  palette: z.array(z.string()).optional(),
+  fonts: z.object({
+    headline: z.string().optional(),
+    body: z.string().optional(),
+  }).optional(),
+  tone: z.string().optional(),
+  logoPath: z.string().optional(),
+  targetAudience: z.string().optional(),
+  productDescription: z.string().optional(),
+  pastCampaigns: z.array(z.object({
+    date: z.string(),
+    title: z.string(),
+    viralityScore: z.number().optional(),
+    outputPath: z.string().optional(),
+  })).optional(),
+  viralFormulas: z.array(z.string()).optional(),
+}).passthrough();
+
+export const podcastToViralClipsSchema = {
+  audioPath: z.string(),
+  outputDir: z.string(),
+  maxClips: z.number().int().positive().default(8),
+  clipDurationSec: z.number().positive().default(60),
+  platform: z.enum(["tiktok", "reels", "youtube_shorts"]).default("tiktok"),
+  addSubtitles: z.boolean().default(true),
+  transcriptPath: z.string().optional(),
+};
+export type PodcastToViralClipsInput = { [K in keyof typeof podcastToViralClipsSchema]: z.infer<(typeof podcastToViralClipsSchema)[K]> };
+
+export const reverseEngineerReferenceSchema = {
+  videoPath: z.string(),
+  outputDir: z.string(),
+  brandSlug: z.string().optional(),
+};
+export type ReverseEngineerReferenceInput = { [K in keyof typeof reverseEngineerReferenceSchema]: z.infer<(typeof reverseEngineerReferenceSchema)[K]> };
+
+export const brandBrainSchema = {
+  action: z.enum(["save", "load", "list", "delete", "update"]),
+  slug: z.string().optional(),
+  memory: brandMemorySchema.optional(),
+};
+export type BrandBrainInput = { [K in keyof typeof brandBrainSchema]: z.infer<(typeof brandBrainSchema)[K]> };
+
+export const storyboardFirstSchema = {
+  brief: z.string().min(1),
+  sceneCount: z.number().int().positive().default(6),
+  style: z.enum(["cinematic", "minimal", "bold", "playful"]).default("cinematic"),
+  outputDir: z.string(),
+  brandSlug: z.string().optional(),
+  generateImages: z.boolean().default(false),
+  totalDurationSec: z.number().positive().default(30),
+};
+export type StoryboardFirstInput = { [K in keyof typeof storyboardFirstSchema]: z.infer<(typeof storyboardFirstSchema)[K]> };
+
+export const viralAutopsySchema = {
+  videoPath: z.string(),
+  outputDir: z.string(),
+  generateFixPlan: z.boolean().default(true),
+};
+export type ViralAutopsyInput = { [K in keyof typeof viralAutopsySchema]: z.infer<(typeof viralAutopsySchema)[K]> };
+
+export const dataToMotionSchema = {
+  dataPath: z.string(),
+  outputDir: z.string(),
+  chartType: z.enum(["bar", "line", "pie", "counter"]).default("bar"),
+  title: z.string().optional(),
+  colorPalette: z.array(z.string()).optional(),
+  addVoiceover: z.boolean().default(false),
+  compName: z.string().optional(),
+  durationSec: z.number().positive().optional(),
+};
+export type DataToMotionInput = { [K in keyof typeof dataToMotionSchema]: z.infer<(typeof dataToMotionSchema)[K]> };
+
+export const trendRadarToAdSchema = {
+  platform: z.enum(["tiktok", "reels", "youtube_shorts"]).default("tiktok"),
+  niche: z.string().default("general"),
+  brandSlug: z.string().optional(),
+  autoGenerateBrief: z.boolean().default(true),
+  outputDir: z.string(),
+};
+export type TrendRadarToAdInput = { [K in keyof typeof trendRadarToAdSchema]: z.infer<(typeof trendRadarToAdSchema)[K]> };
+
+export const voiceBriefModeSchema = {
+  audioPath: z.string(),
+  outputDir: z.string(),
+  autoLaunchDirector: z.boolean().default(false),
+  brandSlug: z.string().optional(),
+};
+export type VoiceBriefModeInput = { [K in keyof typeof voiceBriefModeSchema]: z.infer<(typeof voiceBriefModeSchema)[K]> };
+
+export const selfCritiqueRenderSchema = {
+  aepPath: z.string(),
+  compName: z.string(),
+  outputDir: z.string(),
+  maxIterations: z.number().int().positive().default(3),
+  qualityThreshold: z.number().min(0).max(100).default(75),
+  critiquePrompt: z.string().optional(),
+};
+export type SelfCritiqueRenderInput = { [K in keyof typeof selfCritiqueRenderSchema]: z.infer<(typeof selfCritiqueRenderSchema)[K]> };
+
+export const evolutionaryAdSwarmSchema = {
+  brief: z.string().min(1),
+  brandSlug: z.string().optional(),
+  populationSize: z.number().int().positive().default(12),
+  generations: z.number().int().positive().default(3),
+  outputDir: z.string(),
+  hooks: z.array(z.string()).optional(),
+  grades: z.array(z.string()).optional(),
+  musicStyles: z.array(z.string()).optional(),
+};
+export type EvolutionaryAdSwarmInput = { [K in keyof typeof evolutionaryAdSwarmSchema]: z.infer<(typeof evolutionaryAdSwarmSchema)[K]> };
+
+export const promptToCampaignSchema = {
+  brief: z.string().min(1),
+  brandSlug: z.string().optional(),
+  heroVideoDurationSec: z.number().positive().default(30),
+  platforms: z.array(z.enum(["tiktok", "instagram", "youtube", "facebook"])).optional(),
+  includeStaticPosts: z.boolean().default(true),
+  includePublishCalendar: z.boolean().default(true),
+  outputDir: z.string(),
+};
+export type PromptToCampaignInput = { [K in keyof typeof promptToCampaignSchema]: z.infer<(typeof promptToCampaignSchema)[K]> };
+
+export const autoSoundDesignSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  sfxDir: z.string().optional(),
+  approveOverwrite: z.boolean().default(false),
+  whooshThresholdPx: z.number().positive().optional(),
+  impactThresholdPct: z.number().positive().optional(),
+};
+export type AutoSoundDesignInput = { [K in keyof typeof autoSoundDesignSchema]: z.infer<(typeof autoSoundDesignSchema)[K]> };
+
+export const emotionArcScoringSchema = {
+  aepPath: z.string(),
+  outputAepPath: z.string(),
+  compName: z.string(),
+  scriptText: z.string().min(1),
+  totalDurationSec: z.number().positive(),
+  musicLayerName: z.string().optional(),
+  approveOverwrite: z.boolean().default(false),
+};
+export type EmotionArcScoringInput = { [K in keyof typeof emotionArcScoringSchema]: z.infer<(typeof emotionArcScoringSchema)[K]> };
+
+export const personalizedVideoAtScaleSchema = {
+  templateAepPath: z.string(),
+  compName: z.string(),
+  csvPath: z.string(),
+  outputDir: z.string(),
+  mappings: z.array(z.object({ layerName: z.string(), csvColumn: z.string() })).min(1),
+  maxRows: z.number().int().nonnegative().optional(),
+  filenamePrefix: z.string().optional(),
+  approveOverwrite: z.boolean().default(false),
+};
+export type PersonalizedVideoAtScaleInput = { [K in keyof typeof personalizedVideoAtScaleSchema]: z.infer<(typeof personalizedVideoAtScaleSchema)[K]> };
+
+export const competitorWatchdogSchema = {
+  action: z.enum(["add_competitor", "scan", "list", "remove_competitor"]),
+  competitor: z.object({
+    name: z.string(),
+    slug: z.string(),
+    url: z.string(),
+    platform: z.enum(["youtube", "tiktok", "instagram", "rss"]),
+    niche: z.string().optional(),
+  }).optional(),
+  slug: z.string().optional(),
+  outputDir: z.string(),
+};
+export type CompetitorWatchdogInput = { [K in keyof typeof competitorWatchdogSchema]: z.infer<(typeof competitorWatchdogSchema)[K]> };
+
+export const autoDirectorLoopSchema = {
+  brief: z.string().min(1),
+  brandSlug: z.string().optional(),
+  outputDir: z.string(),
+  autoApprove: z.boolean().default(true),
+  swarmGenerations: z.number().int().positive().default(3),
+  viralityGate: z.number().min(0).max(100).default(72),
+  maxIterations: z.number().int().positive().default(5),
+  expandToCampaign: z.boolean().default(false),
+  templateAepPath: z.string().optional(),
+  compName: z.string().optional(),
+};
+export type AutoDirectorLoopInput = { [K in keyof typeof autoDirectorLoopSchema]: z.infer<(typeof autoDirectorLoopSchema)[K]> };
+
+export const dreamModeSchema = {
+  action: z.enum(["start", "status", "stop", "preview"]),
+  brandSlug: z.string().optional(),
+  niche: z.string().optional(),
+  days: z.number().int().positive().default(7),
+  outputDir: z.string(),
+  primaryPlatform: z.enum(["tiktok", "instagram", "youtube"]).optional(),
+  autoExecute: z.boolean().default(false),
+};
+export type DreamModeInput = { [K in keyof typeof dreamModeSchema]: z.infer<(typeof dreamModeSchema)[K]> };
+
+export const gameTrailerAutopilotSchema = {
+  unityProjectPath: z.string(),
+  outputDir: z.string(),
+  gameTitle: z.string().optional(),
+  durationSec: z.number().positive().default(45),
+  style: z.enum(["cinematic", "action", "cozy", "horror", "arcade"]).default("cinematic"),
+  sceneCount: z.number().int().positive().default(7),
+};
+export type GameTrailerAutopilotInput = { [K in keyof typeof gameTrailerAutopilotSchema]: z.infer<(typeof gameTrailerAutopilotSchema)[K]> };
+
+export const vfxBreedingSchema = {
+  presetA: z.string(),
+  presetB: z.string(),
+  outputDir: z.string(),
+  childName: z.string().optional(),
+  mutationRate: z.number().min(0).max(1).default(0.15),
+};
+export type VfxBreedingInput = { [K in keyof typeof vfxBreedingSchema]: z.infer<(typeof vfxBreedingSchema)[K]> };

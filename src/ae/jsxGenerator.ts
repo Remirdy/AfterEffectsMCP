@@ -26,7 +26,7 @@ function offsetForDirection(dir: Direction | undefined, strength: number): [numb
 }
 
 /** Standard preamble that prints a result marker so the runner can parse output. */
-function withReport(body: string): string {
+export function withReport(body: string): string {
   return `
 ${JSX_HELPERS}
 (function () {
@@ -966,6 +966,7 @@ export function generateCreate3dSceneJsx(opts: {
       MPVFX.run(comp, "cinematicGrade", {});
       // Fine filmic grain on top.
       MPVFX.run(comp, "filmGrain", { strength: 6 });
+      MPVFX.run(comp, "assetStorePolish", { profile: "cinematic", targetLayer: "hero_element", heroGlow: 72 });
       MP.log("3D scene cinematic finishing pass applied");
     } catch (eVfx) {
       MP.log("finishing pass error: " + eVfx.toString());

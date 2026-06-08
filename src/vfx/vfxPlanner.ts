@@ -99,6 +99,16 @@ const RULES: Rule[] = [
   { re: /\b(bokeh|defocus)\b/i, label: "bokeh", step: { type: "preset", name: "bokeh" } },
   { re: /\b(glitch|bozulma|datamosh)\b/i, label: "glitch", step: { type: "preset", name: "glitch" } },
   { re: /\b(neon)\b/i, label: "neon", step: { type: "preset", name: "neonGlow" } },
+  { re: /(\brift\b|y[ıi]rt[ıi]k|\bportal\s*y[ıi]rt[ıi]k|crack\b|shatter\b)/i, label: "dimensional rift", step: { type: "preset", name: "dimensionalRift" } },
+  { re: /(\bcyber\s*scan\b|tarama|hud\s*scan|lock\s*on)/i, label: "cyber scan", step: { type: "preset", name: "cyberScanOverlay" } },
+  { re: /(\bplanet\b|gezegen|\bglobe\b)/i, label: "planet globe", step: { type: "preset", name: "planetGlobeGenerator" } },
+  { re: /(\bnebula\b|bulutsu|\bcosmic\s*dust\b|black\s*hole|kara\s*delik)/i, label: "cosmic nebula", step: { type: "preset", name: "cosmicNebulaGenerator" } },
+  { re: /(\bpixel\s*art\b|pixelated|retro\s*game|8-?bit|16-?bit|crt\b)/i, label: "pixel art filter", step: { type: "preset", name: "pixelArtFilter" } },
+  { re: /(\bmatrix\b|\bdigital\s*rain\b|\bcode\s*rain\b|yeşil\s*kod)/i, label: "matrix digital rain", step: { type: "preset", name: "digitalRain" } },
+  { re: /(\bgravity\s*warp\b|\bgravitational\b|\blensing\b|kütleçekim|uzay\s*büküm)/i, label: "gravity warp", step: { type: "preset", name: "gravityWarp" } },
+  { re: /(\bliquid\b|lava|slime|\bmetaball\b|akışkan|cıva)/i, label: "liquid lava", step: { type: "preset", name: "liquidLava" } },
+  { re: /(\blightning\s*storm\b|\bthunderstorm\b|fırtınası)/i, label: "lightning storm", step: { type: "preset", name: "lightningStorm" } },
+  { re: /(\bmagic\s*sigil\b|\bsummoning\s*circle\b|\brunic\s*circle\b|büyü\s*mührü)/i, label: "magic sigil", step: { type: "preset", name: "magicSigil" } },
 ];
 
 function parseIntensity(p: string): number {

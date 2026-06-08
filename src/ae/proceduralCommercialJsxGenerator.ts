@@ -335,6 +335,7 @@ export function generateProceduralCommercialJsx(opts: ProceduralCommercialOption
       MPVFX.run(comp, "cinematicGrade", {});
       MPVFX.run(comp, "filmGrain", { strength: 4 });
       MPVFX.run(comp, "enableMotionBlur", {});
+      MPVFX.run(comp, "assetStorePolish", { profile: "commercial", targetLayer: "PRODUCT_RIG", heroGlow: 64 });
     } catch(eV) { MP.log("optional finishing pass skipped: " + eV.toString()); }
     comp.workAreaStart = 0; comp.workAreaDuration = DUR;
     app.project.renderQueue.items.add(comp);

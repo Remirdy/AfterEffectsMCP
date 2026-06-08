@@ -19,6 +19,13 @@ ${JSX_HELPERS}
 ${VFX_HELPERS}
 (function () {
   var __result = { ok: true, log: "", output: "", error: null };
+  function __mpAssetStoreFinish(comp, profile, targetLayer) {
+    try {
+      if (comp) MPVFX.run(comp, "assetStorePolish", { profile: profile || "social", targetLayer: targetLayer || null });
+    } catch (ePolish) {
+      try { MP.log("asset-store polish skipped: " + ePolish.toString()); } catch (eLog) {}
+    }
+  }
   try {
 ${body}
     if (!__result.log) { __result.log = MP.getLog(); }
@@ -1366,6 +1373,7 @@ export function generateVideoCompositionJsx(opts: {
 
   // 9. Save project
   sections.push(`
+    __mpAssetStoreFinish(comp, "cinematic", "MP_");
     app.endUndoGroup();
     __result.output = MP.saveProject(${jstr(opts.outputAepPath)});
     __result.log = MP.getLog();
@@ -1708,6 +1716,7 @@ ${socialPrelude(opts.palette)}
     var gv = guide.property("ADBE Root Vectors Group").property(1).property("ADBE Vectors Group");
     var stroke = gv.addProperty("ADBE Vector Graphic - Stroke"); try { stroke.property("ADBE Vector Stroke Color").setValue([1,1,1,0.45]); stroke.property("ADBE Vector Stroke Width").setValue(3); } catch(e) {}
     ` : ""}
+    __mpAssetStoreFinish(comp, "social", "HOOK_");
     MP.log("Instagram Reel template built: hook animation, BPM markers, CTA cards, 9:16 export marker.");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
@@ -1764,6 +1773,7 @@ ${socialPrelude(opts.palette)}
         MPVFX.run(comp, "lightLeak", { start: 0, duration: dur, color: hexToRGB(palette[(i+2)%palette.length]) });
       }
       comp.markerProperty.setValueAtTime(dur/2, new MarkerValue("CUT POINT"));
+      __mpAssetStoreFinish(comp, "social", "TRANSITION_");
       MP.log("Transition comp built: " + name);
     }
     app.project.save(new File(${jstr(opts.outputAepPath)}));
@@ -1802,7 +1812,12 @@ ${socialPrelude(opts.palette)}
       var p = bar.property("ADBE Transform Group").property("ADBE Position"); if (p) { p.setValueAtTime(0,[-lt.width*0.25, lt.height*0.78]); p.setValueAtTime(0.45,[lt.width*0.28, lt.height*0.78]); MP.setEase(p,"expoOut"); }
       var label = lt.layers.addText(lowers[i]); textStyle(label, Math.round(lt.width*0.028), hexToRGB(palette[3] || "#FFFFFF"), "Arial Black");
       var lp = label.property("ADBE Transform Group").property("ADBE Position"); if (lp) { lp.setValueAtTime(0,[-lt.width*0.25,lt.height*0.795]); lp.setValueAtTime(0.45,[lt.width*0.28,lt.height*0.795]); MP.setEase(lp,"expoOut"); }
+      __mpAssetStoreFinish(lt, "broadcast", "LOWER_THIRD");
     }
+    __mpAssetStoreFinish(intro, "commercial", "Text");
+    __mpAssetStoreFinish(outro, "commercial", "Text");
+    __mpAssetStoreFinish(end, "broadcast", "VIDEO_PLACEHOLDER");
+    __mpAssetStoreFinish(subComp, "social", "SUBSCRIBE");
     MP.log("YouTube package built: intro, outro, end screen, subscribe animation, lower thirds. Style: ${opts.style}");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};

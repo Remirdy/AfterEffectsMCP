@@ -69,7 +69,28 @@ export type UnityVfxToolKind =
   | "detect_alpha_bleeding_edges"
   | "estimate_texture_memory_budget"
   | "compare_lod_visual_loss"
-  | "validate_mobile_vfx_pack";
+  | "validate_mobile_vfx_pack"
+  | "build_unreal_niagara_pack"
+  | "build_godot_particles_pack"
+  | "export_effekseer_project"
+  | "build_engine_agnostic_vfx_manifest"
+  | "build_environment_ambient_pack"
+  | "build_destruction_gore_pack"
+  | "build_scifi_tech_pack"
+  | "build_vehicle_vfx_pack"
+  | "build_game_feel_juice_pack"
+  | "build_magic_school_extended"
+  | "build_casual_card_fx_pack"
+  | "build_locomotion_fx_pack"
+  | "generate_motion_vector_flowmap"
+  | "build_ability_timeline"
+  | "bind_vfx_to_animation_events"
+  | "build_realtime_shader_library"
+  | "pair_vfx_with_sfx"
+  | "build_decal_projection_system"
+  | "vfx_from_concept_art"
+  | "match_game_art_direction"
+  | "vfx_pack_autopilot";
 
 export interface UnityVfxToolkitOptions {
   outputFolder: string;
@@ -102,6 +123,14 @@ export interface UnityVfxToolkitOptions {
   lowLodPath?: string;
   spriteSheetPath?: string;
   pngSequenceFolder?: string;
+  conceptArtPath?: string;
+  screenshotPaths?: string[];
+  abilityName?: string;
+  engineTargets?: string[];
+  eventName?: string;
+  animationClipName?: string;
+  sfxStyle?: string;
+  packSize?: number;
   pivot?: [number, number];
   maxTextureSize?: number;
   particleBudget?: number;
@@ -223,6 +252,27 @@ function defaultElements(kind: UnityVfxToolKind, effect: string): string[] {
     estimate_texture_memory_budget: ["texture_memory_mb", "mip_cost", "platform_budget"],
     compare_lod_visual_loss: ["lod_delta", "frame_loss", "resolution_loss", "recommendations"],
     validate_mobile_vfx_pack: ["mobile_texture_budget", "overdraw", "particle_count", "shader_complexity", "pass_fail"],
+    build_unreal_niagara_pack: ["Niagara_System", "Emitter_Modules", "UE_Material", "flipbook_subuv", "sandbox_import_notes"],
+    build_godot_particles_pack: ["GPUParticles2D", "GPUParticles3D", "ParticleProcessMaterial", "CanvasItem_shader", "GDScript_spawner"],
+    export_effekseer_project: ["efkefc_project", "emitter_tree", "flipbook_node", "runtime_bindings", "cross_engine_notes"],
+    build_engine_agnostic_vfx_manifest: ["neutral_schema", "phase_timeline", "render_targets", "engine_export_targets", "budget_profile"],
+    build_environment_ambient_pack: ["rain", "snow", "fog", "sandstorm", "waterfall", "torch_fire", "fireflies", "dust_motes", "wind_leaves", "bioluminescence"],
+    build_destruction_gore_pack: ["glass_shatter", "wood_splinters", "debris_chunks", "blood_splatter", "blood_pool", "ragdoll_residue"],
+    build_scifi_tech_pack: ["plasma", "energy_shield", "teleport_warp", "hologram_glitch", "emp_wave", "laser_beam", "force_field", "tractor_beam", "sci_fi_explosion"],
+    build_vehicle_vfx_pack: ["exhaust_smoke", "tire_smoke", "skid_marks", "nitro_burst", "jet_trail", "water_wake", "dust_trail"],
+    build_game_feel_juice_pack: ["damage_numbers", "level_up", "xp_gain", "coin_loot_pickup", "combo_counter", "crit_flash", "heal_buff_aura", "screen_shake_trigger", "hitstop"],
+    build_magic_school_extended: ["necromancy", "holy_light", "nature_druid", "blood_magic", "void_eldritch", "time", "gravity"],
+    build_casual_card_fx_pack: ["confetti", "sparkle", "match_burst", "slot_machine", "bubble_pop", "card_glint", "card_flip"],
+    build_locomotion_fx_pack: ["footstep_dust", "water_splash", "snow_track", "jump_puff", "landing_puff", "dash_trail", "wall_run_spark"],
+    generate_motion_vector_flowmap: ["motion_vector_map", "flowmap_rg", "flipbook_blend_notes", "shader_sampling_guidance"],
+    build_ability_timeline: ["cast", "channel", "release", "impact", "aftermath", "cooldown", "audio_sync", "animation_events"],
+    bind_vfx_to_animation_events: ["windup_event", "release_event", "impact_event", "trail_enable", "metadata_json", "animation_clip_bindings"],
+    build_realtime_shader_library: ["dissolve", "force_field_fresnel", "hologram", "toon_cel", "water", "lava", "ice", "glow"],
+    pair_vfx_with_sfx: ["cast_sfx", "whoosh_sfx", "impact_sfx", "loop_bed", "tail_decay", "middleware_metadata"],
+    build_decal_projection_system: ["URP_Decal_Projector", "surface_projection", "scorch", "blood_accumulation", "ice_build_up", "fade_persistence"],
+    vfx_from_concept_art: ["concept_palette", "shape_language", "timing_inference", "matched_vfx_pack", "style_notes"],
+    match_game_art_direction: ["palette_dna", "glow_profile", "resolution_style", "rendering_style", "consistency_rules"],
+    vfx_pack_autopilot: ["concept_generation", "variant_batch", "atlas_pack", "prefabs", "lods", "documentation", "asset_store_copy", "trailer_storyboard"],
   };
   return map[kind] || [effect];
 }
@@ -321,16 +371,143 @@ public class ${name}Spawner : MonoBehaviour
 `;
 }
 
+function targetEngine(kind: UnityVfxToolKind): "unity" | "unreal" | "godot" | "effekseer" | "agnostic" {
+  if (kind === "build_unreal_niagara_pack") return "unreal";
+  if (kind === "build_godot_particles_pack") return "godot";
+  if (kind === "export_effekseer_project") return "effekseer";
+  if (kind === "build_engine_agnostic_vfx_manifest") return "agnostic";
+  return "unity";
+}
+
+function unrealNiagaraSystem(name: string, effect: string): string {
+  return JSON.stringify(
+    {
+      asset: `NS_${name}`,
+      type: "Unreal Niagara System Scaffold",
+      effect,
+      emitters: [
+        {
+          name: "E_CoreFlipbook",
+          modules: ["Initialize Particle", "Sprite Renderer", "SubUV Animation", "Color Over Life", "Scale Over Life"],
+        },
+        {
+          name: "E_Sparks",
+          modules: ["Spawn Burst Instantaneous", "Add Velocity", "Curl Noise Force", "Collision", "Lightweight Ribbon optional"],
+        },
+        {
+          name: "E_Distortion",
+          modules: ["Mesh/Sprite Renderer", "Scene Depth Fade", "Distortion Material"],
+        },
+      ],
+      userParameters: ["User.ColorRamp", "User.Intensity", "User.LifetimeScale", "User.SpawnScale", "User.FlipbookTexture"],
+      importNotes: [
+        "Create Niagara System from this JSON plan in UE.",
+        "Use SubUV sprite animation for flipbook atlases.",
+        "Create M_VFX material with translucent/additive blend and soft depth fade.",
+      ],
+    },
+    null,
+    2
+  );
+}
+
+function godotParticleTres(name: string, effect: string): string {
+  return `[gd_resource type="ParticleProcessMaterial" format=3]
+
+[resource]
+resource_name = "${name}_${effect}_ProcessMaterial"
+emission_shape = 1
+direction = Vector3(0, 1, 0)
+spread = 45.0
+initial_velocity_min = 1.0
+initial_velocity_max = 4.0
+gravity = Vector3(0, -0.4, 0)
+scale_min = 0.2
+scale_max = 1.0
+color = Color(0.25, 0.75, 1.0, 1.0)
+`;
+}
+
+function godotSpawner(name: string): string {
+  return `extends Node3D
+
+@export var vfx_scene: PackedScene
+@export var loop_interval := 1.25
+var _next_spawn := 0.0
+
+func _process(delta):
+    _next_spawn -= delta
+    if Input.is_action_just_pressed("ui_accept") or _next_spawn <= 0.0:
+        if vfx_scene:
+            var fx = vfx_scene.instantiate()
+            add_child(fx)
+        _next_spawn = loop_interval
+`;
+}
+
+function effekseerProject(name: string, effect: string, frameCount: number): string {
+  return JSON.stringify(
+    {
+      format: "MotionPilot Effekseer project scaffold",
+      project: `${name}.efkefc`,
+      effect,
+      rootNode: {
+        type: "Emitter",
+        children: [
+          { type: "Sprite", texture: "Textures/effect_spritesheet.png", frameCount, blend: "Add" },
+          { type: "Ribbon", role: "trail_or_afterimage" },
+          { type: "Model", role: "optional_debris_or_mesh_burst" },
+        ],
+      },
+      runtimeTargets: ["Unity Effekseer Runtime", "Unreal Effekseer Runtime", "Native/C++"],
+      notes: ["Open Effekseer and recreate this emitter tree, then save as .efkefc."],
+    },
+    null,
+    2
+  );
+}
+
+function engineAgnosticManifest(name: string, elements: string[], engines: string[]) {
+  return JSON.stringify(
+    {
+      schema: "motionpilot.engine_agnostic_vfx.v1",
+      name,
+      phases: ["cast", "active", "impact", "decay"],
+      elements,
+      renderTargets: ["transparent_png_sequence", "flipbook_atlas", "normal_map_optional", "flowmap_optional"],
+      exports: engines,
+      bindings: {
+        spawn: "gameplay_event",
+        transform: "world_or_screen_space",
+        color: "runtime_tint",
+        scale: "runtime_multiplier",
+      },
+    },
+    null,
+    2
+  );
+}
+
 function readme(kind: UnityVfxToolKind, manifest: Record<string, unknown>): string {
   return `# ${titleFromKind(kind)}
 
 Generated by MotionPilot AE MCP for Unity VFX production.
+
+## Quality Target
+
+This package is authored for **paid asset / Asset Store quality** by default:
+
+- Layered additive core + alpha/smoke/distortion pass planning.
+- Clear gameplay silhouette and readable peak frame.
+- Flipbook metadata, import settings, budget targets, timing phases, LOD notes.
+- Marketplace-ready docs, preview media targets, thumbnails, and catalog hooks.
 
 ## What This Contains
 
 - \`manifest.json\` with flipbook, budget, phase, and import metadata.
 - Unity-friendly folder structure for textures, materials, prefabs, scripts, and VFX Graph notes.
 - Stub assets that are safe to replace inside Unity after rendering real frames.
+- \`QUALITY_CHECKLIST.md\` for art-direction, optimization, loop, and readability checks.
 
 ## Recommended Flow
 
@@ -361,13 +538,16 @@ export async function createUnityVfxToolkitPackage(
   const effect = inferEffect(prompt, opts.effectType);
   const packageName = slug(opts.packageName || opts.effectName || `${titleFromKind(kind)}_${effect}`);
   const frameCount = opts.frameCount || 64;
-  const width = opts.width || 1024;
-  const height = opts.height || 1024;
+  const qualityTarget = opts.qualityTarget || "assetStore";
+  const width = opts.width || (qualityTarget === "assetStore" ? 1024 : 768);
+  const height = opts.height || (qualityTarget === "assetStore" ? 1024 : 768);
   const fps = opts.fps || 30;
   const loop = opts.loop ?? /loop|aura|portal|fog|atmos|idle/i.test(prompt);
   const blendMode = opts.blendMode || (/smoke|fog|poison|blood/i.test(prompt) ? "alphaBlend" : "additive");
   const pipeline = opts.targetPipeline || "urp";
   const targetPlatform = opts.targetPlatform || "all";
+  const engine = targetEngine(kind);
+  const engineTargets = opts.engineTargets?.length ? opts.engineTargets : ["unity", "unreal", "godot", "effekseer"];
   const g = grid(frameCount, opts.columns, opts.rows);
   const out = path.join(opts.outputFolder, packageName);
   const manifestPath = path.join(out, "manifest.json");
@@ -391,7 +571,7 @@ export async function createUnityVfxToolkitPackage(
     prompt,
     effect,
     style: opts.style || "stylized",
-    target: { engine: "unity", pipeline, platform: targetPlatform },
+    target: { engine, pipeline: engine === "unity" ? pipeline : undefined, platform: targetPlatform },
     render: {
       width,
       height,
@@ -415,9 +595,34 @@ export async function createUnityVfxToolkitPackage(
     elements,
     variants: {
       count: opts.variationCount || (kind.includes("atlas") || kind.includes("variation") || kind.includes("asset_store") ? 12 : 1),
-      qualityTarget: opts.qualityTarget || (kind.includes("asset_store") || kind.includes("premium") ? "assetStore" : "production"),
+      qualityTarget,
       naming: `${packageName}_Variant_##`,
       seedStrategy: "deterministic_seed_per_variant",
+    },
+    assetStoreStandard: {
+      minimumDeliverables: [
+        "transparent_png_sequence",
+        "flipbook_atlas",
+        "material_prefab_scaffold",
+        "vfxgraph_shadergraph_notes",
+        "preview_gif_or_mp4",
+        "hero_thumbnail",
+        "contact_sheet",
+        "quality_checklist",
+        "usage_readme",
+      ],
+      readabilityTargets: {
+        peakFrameContrast: "high",
+        silhouette: "clear_at_gameplay_scale",
+        backgroundChecks: ["black", "white", "mid_gray", "in_game_scene"],
+        thumbnailFrame: "phase_peak",
+      },
+      optimizationTargets: {
+        alphaCrop: "tight_bounds",
+        edgePaddingPx: 4,
+        recommendedMips: true,
+        lodVariants: targetPlatform === "mobile" ? ["mobile", "low"] : ["high", "medium", "low"],
+      },
     },
     phases: phases.map((phase, i) => ({
       name: phase,
@@ -455,6 +660,8 @@ export async function createUnityVfxToolkitPackage(
       preview: {
         mp4: opts.outputVideoPath || "Marketplace/preview.mp4",
         gif: opts.outputGifPath || "Marketplace/preview.gif",
+        hero: "Marketplace/hero.png",
+        contactSheet: "Marketplace/contact_sheet.png",
       },
       unityPackage: {
         targetPath: opts.outputUnityPackagePath || `${packageName}.unitypackage`,
@@ -472,6 +679,39 @@ export async function createUnityVfxToolkitPackage(
   await writeJson(manifestPath, manifest);
   files.push(manifestPath);
   await writeText(path.join(out, "README.md"), readme(kind, manifest), files);
+  await writeText(
+    path.join(out, "QUALITY_CHECKLIST.md"),
+    `# ${packageName} Quality Checklist
+
+## Art Direction
+
+- Peak frame reads clearly at 128px, 256px, and gameplay scale.
+- Core, secondary sparks, smoke, and distortion are visually separated.
+- Color ramp has a bright core, saturated mid-tone, and clean alpha falloff.
+- Effect has anticipation, peak, decay, and optional linger phases.
+
+## Unity Integration
+
+- Material blend mode matches the manifest: ${blendMode}.
+- Flipbook frame rate is ${fps} FPS and frame count is ${frameCount}.
+- Pivot is ${(manifest.render as any).pivot.join(", ")}.
+- Texture wrap mode is ${loop ? "Repeat" : "Clamp"}.
+
+## Optimization
+
+- Transparent bounds are cropped before atlas packing.
+- Edge padding is at least 4 px to avoid alpha bleeding.
+- Mobile version stays within ${(manifest.budget as any).particleBudget} particles and ${(manifest.budget as any).overdrawBudget}x overdraw.
+- LOD variants preserve silhouette and timing even when detail is reduced.
+
+## Marketplace Media
+
+- Include preview GIF/MP4, hero image, contact sheet, and one gameplay-scale thumbnail.
+- Show black, white, gray, and in-scene background readability.
+- Document URP/HDRP compatibility and required Unity packages.
+`,
+    files
+  );
   await writeText(path.join(out, "Materials", `M_${packageName}_${blendMode}.mat`), materialText(`M_${packageName}_${blendMode}`, blendMode, pipeline), files);
   await writeText(path.join(out, "Prefabs", `PF_${packageName}.prefab`), prefabText(`PF_${packageName}`, `M_${packageName}_${blendMode}`), files);
   await writeText(path.join(out, "VFXGraph", `VFX_${packageName}.json`), vfxGraphStub(`VFX_${packageName}`, effect, loop), files);
@@ -521,6 +761,61 @@ OcclusionCullingSettings:
     );
   }
 
+  if (kind === "build_unreal_niagara_pack") {
+    await writeText(path.join(out, "Unreal", `NS_${packageName}.niagara.json`), unrealNiagaraSystem(packageName, effect), files);
+    await writeText(
+      path.join(out, "Unreal", `M_${packageName}_VFX.uasset-notes.md`),
+      `# Unreal Material Notes
+
+- Create \`M_${packageName}_VFX\` as a Translucent/Additive material.
+- Add Texture Sample for flipbook atlas, Particle Color, Depth Fade, and optional distortion normal.
+- Niagara renderer should bind SubUV rows=${g.rows}, columns=${g.columns}, frames=${frameCount}.
+- Recommended Niagara user parameters: ColorRamp, Intensity, LifetimeScale, SpawnScale, FlipbookTexture.
+`,
+      files
+    );
+  }
+
+  if (kind === "build_godot_particles_pack") {
+    await writeText(path.join(out, "Godot", `${packageName}_process_material.tres`), godotParticleTres(packageName, effect), files);
+    await writeText(path.join(out, "Godot", `${packageName}_spawner.gd`), godotSpawner(packageName), files);
+    await writeText(
+      path.join(out, "Godot", `${packageName}_canvas_item_shader.shader`),
+      `shader_type canvas_item;
+render_mode blend_add;
+
+uniform sampler2D flipbook_tex;
+uniform vec4 tint : source_color = vec4(0.25, 0.75, 1.0, 1.0);
+uniform float intensity = 1.0;
+
+void fragment() {
+    vec4 c = texture(flipbook_tex, UV) * tint * intensity;
+    COLOR = c;
+}
+`,
+      files
+    );
+  }
+
+  if (kind === "export_effekseer_project") {
+    await writeText(path.join(out, "Effekseer", `${packageName}.efkefc.json`), effekseerProject(packageName, effect, frameCount), files);
+    await writeText(
+      path.join(out, "Effekseer", "runtime-import-notes.md"),
+      `# Effekseer Import Notes
+
+- Recreate the JSON emitter tree in Effekseer and save as \`${packageName}.efkefc\`.
+- Assign \`Textures/effect_spritesheet.png\` to the Sprite node.
+- Use the same atlas grid: columns=${g.columns}, rows=${g.rows}, frames=${frameCount}.
+- Runtime targets: Unity, Unreal, native Effekseer runtime.
+`,
+      files
+    );
+  }
+
+  if (kind === "build_engine_agnostic_vfx_manifest") {
+    await writeText(path.join(out, "engine-agnostic.vfx.json"), engineAgnosticManifest(packageName, elements, engineTargets), files);
+  }
+
   if (kind === "build_vfx_pack_index" || kind === "build_asset_store_vfx_package") {
     await writeText(
       path.join(out, "catalog.md"),
@@ -543,6 +838,143 @@ OcclusionCullingSettings:
           alphaOverLife: [[0, 0], [0.08, 1], [0.65, 0.9], [1, 0]],
           emissionBurst: [[0, 1], [0.1, 0.65], [0.35, 0.15], [1, 0]],
           velocityDampening: [[0, 1], [0.45, 0.55], [1, 0.08]],
+        },
+        null,
+        2
+      ),
+      files
+    );
+  }
+
+  if (kind === "generate_motion_vector_flowmap") {
+    await writeText(
+      path.join(out, "flowmap-spec.json"),
+      JSON.stringify(
+        {
+          output: "Textures/flowmap_rg.png",
+          channels: { red: "x motion - encoded 0..1", green: "y motion - encoded 0..1", blue: "reserved", alpha: "confidence" },
+          usage: "Sample previous/next flipbook frames and offset UVs for smooth interpolation.",
+          shaderParams: ["_FlowMap", "_FlowStrength", "_FrameBlend", "_FlipbookRows", "_FlipbookColumns"],
+        },
+        null,
+        2
+      ),
+      files
+    );
+  }
+
+  if (kind === "build_ability_timeline") {
+    const ability = opts.abilityName || packageName;
+    const abilityPhases = ["cast", "channel", "release", "impact", "aftermath"];
+    await writeText(
+      path.join(out, "ability-timeline.json"),
+      JSON.stringify(
+        {
+          ability,
+          timeline: abilityPhases.map((phase, i) => ({
+            phase,
+            time: Number((i * 0.45).toFixed(2)),
+            vfx: `${ability}_${phase}`,
+            sfx: `${ability}_${phase}_sfx`,
+            animationEvent: `${ability}.${phase}`,
+          })),
+          gameplayHooks: ["cooldown_start", "hit_confirm", "damage_apply", "camera_shake", "hitstop"],
+        },
+        null,
+        2
+      ),
+      files
+    );
+  }
+
+  if (kind === "bind_vfx_to_animation_events") {
+    await writeText(
+      path.join(out, "animation-events.json"),
+      JSON.stringify(
+        {
+          animationClip: opts.animationClipName || "Attack.anim",
+          events: [
+            { frame: 4, name: "windup", spawn: "charge_glow" },
+            { frame: 12, name: opts.eventName || "release", spawn: "muzzle_or_slash" },
+            { frame: 18, name: "impact", spawn: "impact_burst", hitstopMs: 60 },
+            { frame: 24, name: "trail_off", spawn: "afterimage_decay" },
+          ],
+        },
+        null,
+        2
+      ),
+      files
+    );
+  }
+
+  if (kind === "pair_vfx_with_sfx") {
+    await writeText(
+      path.join(out, "sfx-pairing.json"),
+      JSON.stringify(
+        {
+          style: opts.sfxStyle || "cinematic_game",
+          cues: [
+            { phase: "cast", type: "charge", timingOffsetMs: -120, suggestedFile: "cast_charge.wav" },
+            { phase: "release", type: "whoosh", timingOffsetMs: -40, suggestedFile: "release_whoosh.wav" },
+            { phase: "impact", type: "impact", timingOffsetMs: 0, suggestedFile: "impact_hit.wav" },
+            { phase: "decay", type: "tail", timingOffsetMs: 120, suggestedFile: "spark_tail.wav" },
+          ],
+          middleware: ["Unity AudioSource", "FMOD event metadata", "Wwise event metadata"],
+        },
+        null,
+        2
+      ),
+      files
+    );
+  }
+
+  if (kind === "vfx_from_concept_art" || kind === "match_game_art_direction") {
+    await writeText(
+      path.join(out, "art-direction-profile.json"),
+      JSON.stringify(
+        {
+          conceptArtPath: opts.conceptArtPath || null,
+          screenshotPaths: opts.screenshotPaths || [],
+          extractedStyle: {
+            palette: ["#5EE7FF", "#7A4DFF", "#FFB84D", "#111827"],
+            glowProfile: "soft core, saturated edge bloom",
+            shapeLanguage: ["arcs", "runes", "tapered streaks", "soft particles"],
+            resolutionStyle: opts.style || "stylized",
+          },
+          consistencyRules: [
+            "Use the extracted palette for all variants.",
+            "Keep peak-frame silhouette readable at gameplay scale.",
+            "Match glow radius and edge softness across the pack.",
+          ],
+        },
+        null,
+        2
+      ),
+      files
+    );
+  }
+
+  if (kind === "vfx_pack_autopilot") {
+    const packSize = opts.packSize || 30;
+    await writeText(
+      path.join(out, "autopilot-plan.json"),
+      JSON.stringify(
+        {
+          packSize,
+          stages: [
+            "concept_and_art_direction",
+            "effect_taxonomy",
+            "variant_generation",
+            "atlas_and_lod_packaging",
+            "prefab_material_shadergraph_export",
+            "documentation_and_asset_store_copy",
+            "trailer_storyboard",
+          ],
+          effects: Array.from({ length: packSize }, (_, i) => ({
+            id: `fx_${String(i + 1).padStart(2, "0")}`,
+            category: elements[i % elements.length],
+            deliverables: ["flipbook", "prefab", "material", "lod", "thumbnail", "usage_notes"],
+          })),
         },
         null,
         2

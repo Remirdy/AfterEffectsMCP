@@ -16,6 +16,13 @@ ${JSX_HELPERS}
 ${VFX_HELPERS}
 (function () {
   var __result = { ok: true, log: "", output: "", error: null };
+  function __mpAssetStoreFinish(comp, profile, targetLayer) {
+    try {
+      if (comp) MPVFX.run(comp, "assetStorePolish", { profile: profile || "broadcast", targetLayer: targetLayer || null });
+    } catch (ePolish) {
+      try { MP.log("asset-store polish skipped: " + ePolish.toString()); } catch (eLog) {}
+    }
+  }
   try {
 ${body}
     if (!__result.log) { __result.log = MP.getLog(); }
@@ -213,6 +220,7 @@ export function generateAudioSpectrumVisualizerJsx(opts: {
 
     // Finish.
     MPVFX.run(comp, "cinematicGrade", {});
+    __mpAssetStoreFinish(comp, "broadcast", "MP_");
     MP.log("Audio spectrum visualizer built: " + style + ", " + barCount + " bars");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
@@ -440,6 +448,7 @@ export function generateInfographicAnimationJsx(opts: {
     ` : ""}
 
     MP.log("Infographic built: " + chartType + " with " + data.length + " data points");
+    __mpAssetStoreFinish(comp, "broadcast", "Chart");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
@@ -552,6 +561,7 @@ export function generateLowerThirdJsx(opts: {
       }
 
       MP.log("Lower third variant " + (vi+1) + " built: " + nameData.name);
+      __mpAssetStoreFinish(comp, "broadcast", "LT_");
     }
 
     app.project.save(new File(${jstr(opts.outputAepPath)}));
@@ -660,6 +670,7 @@ export function generateLogoStingJsx(opts: {
 
     MPVFX.run(comp, "filmGrain", { strength: 5 });
     MPVFX.run(comp, "cinematicGrade", {});
+    __mpAssetStoreFinish(comp, "commercial", "MP_Logo");
     MP.log("Logo sting built: ${opts.style}");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
@@ -1041,6 +1052,7 @@ export function generateGalaxySceneJsx(opts: {
     }
     MPVFX.run(comp, "cinematicBloom", { strength: 0.9, radius: 100 });
     ${opts.addCameraMove ? `var camNull = comp.layers.addNull(comp.duration); camNull.name = "CAM_Galaxy_Drift"; var s = bg.property("ADBE Transform Group").property("ADBE Scale"); if (s) { s.setValueAtTime(0,[100,100]); s.setValueAtTime(comp.duration,[112,112]); MP.setEase(s,"sineOut"); }` : ""}
+    __mpAssetStoreFinish(comp, "cinematic", "Star_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
     MP.log("Galaxy scene built: " + ${jstr(opts.galaxyType)});
@@ -1097,6 +1109,7 @@ export function generate3dCityscapeJsx(opts: {
     ${opts.addRain ? `MPVFX.run(comp, "rainStorm", { strength: 0.7, duration: comp.duration });` : ""}
     var cam = comp.layers.addCamera("Camera_Flythrough", [cw/2, ch/2]); cam.property("ADBE Transform Group").property("ADBE Position").setValueAtTime(0,[cw/2,ch*0.52,-1200]); cam.property("ADBE Transform Group").property("ADBE Position").setValueAtTime(comp.duration,[cw/2 + (${jstr(opts.cameraMove)}==="orbit"?260:0),ch*0.48,-450]);
     MPVFX.run(comp, "cinematicBloom", { strength: 0.45 });
+    __mpAssetStoreFinish(comp, "cinematic", "Building_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
     MP.log("3D cityscape built.");
@@ -1151,6 +1164,7 @@ export function generateDnaHelixJsx(opts: {
     var rot = rig.property("ADBE Transform Group").property("ADBE Rotate Y"); if (rot) rot.expression = "time*" + (${opts.rotationSpeed}*55);
     var cam = comp.layers.addCamera("Camera_DNA", [cw/2,ch/2]); cam.property("ADBE Transform Group").property("ADBE Position").setValue([cw/2, ch/2, ${opts.cameraAngle === "side" ? -850 : -1150}]);
     MPVFX.run(comp, "cinematicBloom", { strength: 0.5 });
+    __mpAssetStoreFinish(comp, "cinematic", "DNA_Rig");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
     MP.log("DNA helix built.");
@@ -1195,6 +1209,7 @@ export function generateCountdownTimerJsx(opts: {
     ` : ""}
     ${opts.addLabels ? `var lab = comp.layers.addText(${jstr(opts.style.toUpperCase())}); lab.name = "Countdown_Label"; try { var ld=lab.property("ADBE Text Properties").property("ADBE Text Document"); var lv=ld.value; lv.fontSize=28; lv.fillColor=[0.7,0.7,0.75]; lv.justification=ParagraphJustification.CENTER_JUSTIFY; ld.setValue(lv); } catch(e){} lab.property("ADBE Transform Group").property("ADBE Position").setValue([cw/2,ch*0.68]);` : ""}
     if (${jstr(opts.endAction)} === "flash" || ${jstr(opts.endAction)} === "explode") { MPVFX.run(comp, "muzzleFlash", { start: dur-1, radius: 260, color: ac }); }
+    __mpAssetStoreFinish(comp, "broadcast", "Countdown");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
     MP.log("Countdown timer built.");
@@ -1240,6 +1255,7 @@ export function generateTextMorphJsx(opts: {
       } else if (${jstr(opts.morphStyle)} === "glitch-swap") { MPVFX.run(comp, "glitch", { start: t0+${opts.holdDuration}-0.05, duration: ${opts.morphDuration} }); }
       var gl = l.property("ADBE Effect Parade").addProperty("ADBE Glow"); if (gl) { try { gl.property("ADBE Glow-0003").setValue(25); gl.property("ADBE Glow-0004").setValue(1.5); } catch(e){} }
     }
+    __mpAssetStoreFinish(comp, "social", "Morph_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
     MP.log("Text morph built with " + words.length + " words.");
@@ -1285,6 +1301,7 @@ export function generateTimelineAnimationJsx(opts: {
       label.property("ADBE Transform Group").property("ADBE Position").setValue([x, y + (i%2===0 ? -70 : 80)]);
       var lo=label.property("ADBE Transform Group").property("ADBE Opacity"); if(lo){lo.setValueAtTime(i*0.25,0); lo.setValueAtTime(i*0.25+0.35,100);}
     }
+    __mpAssetStoreFinish(comp, "broadcast", "Timeline");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output=${jstr(opts.outputAepPath)};
     MP.log("Timeline animation built.");
@@ -1331,6 +1348,7 @@ export function generateWorldMapJsx(opts: {
       prev=p;
     }
     MPVFX.run(comp, "cinematicBloom", { strength: 0.35 });
+    __mpAssetStoreFinish(comp, "broadcast", "Map_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output=${jstr(opts.outputAepPath)};
     MP.log("World map built with " + pts.length + " points.");
@@ -1408,6 +1426,7 @@ export function generateTemplateFromBrandkitJsx(opts: {
         MPVFX.run(comp, "lightSweep", { start: 0.7, duration: 1.1, targetLayer: "LOGO_WORDMARK" });
       }
       var marker=comp.layers.addNull(dur); marker.name="MP_TEMPLATE_NOTES"; try{ marker.enabled=false; marker.property("ADBE Marker").setValueAtTime(0,new MarkerValue("Brand kit template: "+kind)); }catch(e){}
+      __mpAssetStoreFinish(comp, "commercial", "LOGO_WORDMARK");
       return comp;
     }
     for(var i=0;i<deliverables.length;i++) buildComp(deliverables[i], i);
@@ -1493,6 +1512,7 @@ export function generateProductMockupSceneJsx(opts: {
     }
     ` : ""}
     MPVFX.run(comp, "cinematicGrade", {});
+    __mpAssetStoreFinish(comp, "commercial", "PRODUCT_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output=${jstr(opts.outputAepPath)};
     MP.log("Product mockup scene built: " + ptype);

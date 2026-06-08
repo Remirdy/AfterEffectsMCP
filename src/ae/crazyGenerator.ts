@@ -29,6 +29,13 @@ ${JSX_HELPERS}
 ${VFX_HELPERS}
 (function () {
   var __result = { ok: true, log: "", output: "", error: null };
+  function __mpAssetStoreFinish(comp, profile, targetLayer) {
+    try {
+      if (comp) MPVFX.run(comp, "assetStorePolish", { profile: profile || "cinematic", targetLayer: targetLayer || null });
+    } catch (ePolish) {
+      try { MP.log("asset-store polish skipped: " + ePolish.toString()); } catch (eLog) {}
+    }
+  }
   try {
 ${body}
     if (!__result.log) { __result.log = MP.getLog(); }
@@ -202,6 +209,7 @@ export function generateKineticTypographyJsx(opts: {
     }
 
     MP.log("Kinetic typography built: " + words.length + " words, style: " + style);
+    __mpAssetStoreFinish(comp, "social", "Word_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
@@ -324,6 +332,7 @@ export function generateParticleLogoRevealJsx(opts: {
     MPVFX.run(comp, "filmGrain", { strength: 4 });
 
     MP.log("Particle logo reveal built: " + pCount + " particles, style: " + style);
+    __mpAssetStoreFinish(comp, "commercial", "MP_Logo_Text");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
@@ -500,6 +509,7 @@ export function generateHolographicHudSceneJsx(opts: {
     MPVFX.run(comp, "cinematicGrade", {});
 
     MP.log("HUD scene built: " + sceneType);
+    __mpAssetStoreFinish(comp, "cinematic", "HUD_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
@@ -641,6 +651,7 @@ export function generateGenerativeArtLoopJsx(opts: {
     var grOp = grainAdj.property("ADBE Transform Group").property("ADBE Opacity"); if (grOp) grOp.setValue(30);
 
     MP.log("Generative art loop built: " + style + ", complexity " + complexity);
+    __mpAssetStoreFinish(comp, "cinematic", "GEN_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
@@ -842,6 +853,7 @@ export function generateRetroSynthwaveSceneJsx(opts: {
     MPVFX.run(comp, "cinematicGrade", {});
 
     MP.log("Retro synthwave scene built");
+    __mpAssetStoreFinish(comp, "cinematic", "SUN_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
@@ -907,6 +919,7 @@ export function generateAuroraBorealisJsx(opts: {
     ` : ""}
     MPVFX.run(comp, "filmGrain", { strength: 4 });
     MP.log("Aurora borealis built: wave warp + fractal noise + polar coordinates + color bands.");
+    __mpAssetStoreFinish(comp, "cinematic", "Aurora_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
@@ -954,6 +967,7 @@ export function generateFireTornadoJsx(opts: {
     ${opts.addSmoke ? `MPVFX.run(comp, "smoke", { position: [cw/2, ch*0.42], strength: intensity, duration: dur });` : ""}
     MPVFX.run(comp, "cinematicGrade", {});
     MP.log("Fire tornado built: fire + spiral distort + turbulent displace + particle drift.");
+    __mpAssetStoreFinish(comp, "game", "Fire_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
@@ -1003,9 +1017,9 @@ export function generateOceanWavesJsx(opts: {
     }
     MPVFX.run(comp, "filmGrain", { strength: 3 });
     MP.log("Ocean waves built: layered wave warp, depth shadow, spray particles and foam.");
+    __mpAssetStoreFinish(comp, "cinematic", "Ocean_");
     app.project.save(new File(${jstr(opts.outputAepPath)}));
     __result.output = ${jstr(opts.outputAepPath)};
   `;
   return withReport(body);
 }
-

@@ -283,6 +283,7 @@ export function generateCommercialJsx(opts: CommercialOptions): string {
       MPVFX.run(comp, "lightSweep", { targetLayer: "02_PRODUCT_HERO", start: 2.4, duration: 1.6 });
       MPVFX.run(comp, "cinematicGrade", {});
       MPVFX.run(comp, "filmGrain", { strength: 6 });
+      MPVFX.run(comp, "assetStorePolish", { profile: "commercial", targetLayer: "08_FINAL_PACKSHOT", heroGlow: 70 });
       MP.log("commercial finishing pass applied");
     } catch(eVfx){ MP.log("finishing pass error: "+eVfx.toString()); }
 

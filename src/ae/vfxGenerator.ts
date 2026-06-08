@@ -118,6 +118,7 @@ export function generateApplyVfxJsx(opts: {
     }
 
     app.endUndoGroup();
+    MPVFX.run(comp, "assetStorePolish", { profile: "game", targetLayer: "VFX" });
     __result.output = MP.saveProject(${jstr(opts.outputAepPath)});
     __result.log = MP.getLog() + "\\nMP_VFX_APPLIED_BEGIN\\n" + applied.join(",") + "\\nMP_VFX_APPLIED_END";
   `;
@@ -162,6 +163,7 @@ export function generateCreateVfxCompJsx(opts: {
       catch (eApply) { MP.log("VFX FAILED (" + (call.presetId || call.fn) + "): " + eApply.toString()); }
     }
     try { comp.motionBlur = true; } catch (e) {}
+    MPVFX.run(comp, "assetStorePolish", { profile: "game", targetLayer: "VFX" });
     app.endUndoGroup();
     __result.output = MP.saveProject(${jstr(opts.outputAepPath)});
     __result.log = MP.getLog() + "\\nMP_VFX_APPLIED_BEGIN\\n" + applied.join(",") + "\\nMP_VFX_APPLIED_END";
@@ -251,6 +253,7 @@ export function generateComplexVfxJsx(opts: {
       }
     }
     try { comp.motionBlur = true; } catch (e) {}
+    MPVFX.run(comp, "assetStorePolish", { profile: "game", targetLayer: "VFX" });
     app.endUndoGroup();
     __result.output = MP.saveProject(${jstr(opts.outputAepPath)});
     __result.log = MP.getLog() + "\\nMP_VFX_COMPOSITE_BEGIN\\n" + applied.join(",") + "\\nMP_VFX_COMPOSITE_END";
@@ -336,6 +339,7 @@ export function generatePromptVfxJsx(opts: {
       }
     }
     try { comp.motionBlur = true; } catch (e) {}
+    MPVFX.run(comp, "assetStorePolish", { profile: "game", targetLayer: "VFX" });
     app.endUndoGroup();
     __result.output = MP.saveProject(${jstr(opts.outputAepPath)});
     __result.log = MP.getLog() + "\\nMP_PROMPT_VFX_APPLIED_BEGIN\\n" + applied.join(",") + "\\nMP_PROMPT_VFX_APPLIED_END";
